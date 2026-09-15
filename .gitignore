@@ -1,0 +1,25 @@
+# data
+data/*.db
+data/*.db-shm
+data/*.db-wal
+data/backups/
+
+# mock seed — real SD business docs, never commit
+web/src/mock/seed.json
+
+# .NET
+[Bb]in/
+[Oo]bj/
+*.user
+
+# node
+node_modules/
+web/dist/
+mcp/dist/
+*.log
+scripts/logs/
+
+# editor
+.vs/
+.idea/
+.vscode/

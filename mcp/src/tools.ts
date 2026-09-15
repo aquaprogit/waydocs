@@ -1,0 +1,225 @@
+import { z } from 'zod'
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { ApiError, api } from './client.js'
+import { agentHeader, mapEntry } from './shape.js'
+import type { DocHeaderInput } from './types.js'
+
+const REF_TYPES = ['ticket', 'service', 'endpoint', 'dbObject', 'd365Entity'] as const
+const LINK_TYPES = ['depends-on', 'related', 'supersedes', 'conflicts-with'] as const
+const KINDS = ['DomainIndex', 'Feature', 'Reference', 'QaLog', 'Backlog', 'Plan'] as const
+const STATUSES = ['Current', 'Draft', 'Deprecated'] as const
+
+const headerSchema = z.object({
+  title: z.string(),
+  summary: z.string().max(400).describe('1-3 sentences — what an agent reads first to decide whether to open the doc'),
+  kind: z.enum(KINDS),
+  status: z.enum(STATUSES),
+  answers: z.array(z.string()).max(8).describe('questions this doc answers'),
+  notCovered: z.array(z.string()).describe('nearby topics that live in another doc'),
+  refs: z.array(z.object({ type: z.enum(REF_TYPES), value: z.string() })),
+  links: z.array(z.object({ to: z.string(), type: z.enum(LINK_TYPES) })),
+})
+
+type Json = Record<string, unknown>
+const ok = (payload: unknown) => ({ content: [{ type: 'text' as const, text: JSON.stringify(payload, null, 2) }] })
+const fail = (message: string) => ({ isError: true as const, content: [{ type: 'text' as const, text: message }] })
+
+async function guarded<T>(fn: () => Promise<T>) {
+  try {
+    return ok(await fn())
+  } catch (e) {
+    return fail(e instanceof ApiError ? e.message : (e as Error).message)
+  }
+}
+
+export function registerTools(server: McpServer) {
+  // ---------------------------------------------------------------- headers only (cheap — scan before opening anything)
+
+  server.registerTool(
+    'docs_map',
+    {
+      title: 'Map of every doc',
+      description:
+        'The cheapest possible view of every doc: id, title, summary, kind, status, body token count — no answers, refs, links or body. ' +
+        'Call this first for any question; only open the docs that look relevant via get_header or get_doc.',
+      inputSchema: { domain: z.string().nullish().describe('filter to one domain, e.g. "order"') },
+    },
+    async ({ domain }) => guarded(async () => (await api.listDocs()).filter((h) => !domain || h.domain === domain).map(mapEntry)),
+  )
+
+  server.registerTool(
+    'search_docs',
+    {
+      title: 'Search docs by question or keywords',
+      description: 'Ranks docs by title/summary/answers/refs (headers only, no body scan) — good for "which doc answers X?".',
+      inputSchema: { query: z.string(), limit: z.number().int().positive().max(50).default(10) },
+    },
+    async ({ query, limit }) =>
+      guarded(async () => {
+        const hits = await api.search(query, true, limit)
+        return hits.map((h) => ({ ...mapEntry(h.header), matchedIn: h.field, snippet: h.snippet }))
+      }),
+  )
+
+  server.registerTool(
+    'find_docs',
+    {
+      title: 'Find docs referencing a ticket, service, endpoint or DB/D365 object',
+      description: 'Exact-match lookup over the refs every doc lists in its header — start here for "docs about ticket #4936" or "docs touching OrderSubmittingHandler".',
+      inputSchema: { type: z.enum(REF_TYPES), value: z.string() },
+    },
+    async ({ type, value }) => guarded(async () => (await api.find(type, value)).map(mapEntry)),
+  )
+
+  server.registerTool(
+    'get_neighbors',
+    {
+      title: 'Docs connected to one doc in the graph',
+      description:
+        'part-of/mentions (automatic) plus related/depends-on/supersedes/conflicts-with (typed, author-set) edges touching this doc, ' +
+        'in both directions. depth 2 also includes neighbors-of-neighbors.',
+      inputSchema: { id: z.string(), depth: z.number().int().min(1).max(3).default(1) },
+    },
+    async ({ id, depth }) =>
+      guarded(async () => {
+        const graph = await api.graph()
+        const titleOf = new Map(graph.nodes.map((n) => [n.id, n.title]))
+        if (!titleOf.has(id)) throw new ApiError(`No doc '${id}'.`)
+        let frontier = new Set([id])
+        const seen = new Set([id])
+        const edgesOut: { from: string; to: string; type: string; auto: boolean }[] = []
+        for (let d = 0; d < depth; d++) {
+          const next = new Set<string>()
+          for (const e of graph.edges) {
+            if (frontier.has(e.from) && !seen.has(e.to)) { next.add(e.to); edgesOut.push(e) }
+            else if (frontier.has(e.to) && !seen.has(e.from)) { next.add(e.from); edgesOut.push(e) }
+            else if (frontier.has(e.from) && frontier.has(e.to)) edgesOut.push(e)
+          }
+          for (const n of next) seen.add(n)
+          frontier = next
+          if (frontier.size === 0) break
+        }
+        return {
+          neighbors: [...seen].filter((n) => n !== id).map((n) => ({ id: n, title: titleOf.get(n) ?? n })),
+          edges: edgesOut.map((e) => ({ ...e, fromTitle: titleOf.get(e.from) ?? e.from, toTitle: titleOf.get(e.to) ?? e.to })),
+        }
+      }),
+  )
+
+  server.registerTool(
+    'get_header',
+    {
+      title: 'Full header of one doc (no body)',
+      description: 'Summary, answers, not-covered, refs, links, section list with per-section token counts — everything except the markdown body.',
+      inputSchema: { id: z.string() },
+    },
+    async ({ id }) => guarded(async () => agentHeader((await api.getDoc(id)).header)),
+  )
+
+  // ---------------------------------------------------------------- body
+
+  server.registerTool(
+    'get_doc',
+    {
+      title: 'Read a doc body (or just some sections)',
+      description:
+        'Pass sections (matched by heading, case/punctuation-insensitive) to pull only what you need — cheaper than the full body. ' +
+        'Omit sections for the whole doc. Omit revision for the current one.',
+      inputSchema: { id: z.string(), sections: z.array(z.string()).nullish(), revision: z.number().int().positive().nullish() },
+    },
+    async ({ id, sections, revision }) =>
+      guarded(async () => {
+        if (sections && sections.length > 0) return await api.getSections(id, sections)
+        const doc = await api.getDoc(id, revision ?? undefined)
+        return { header: agentHeader(doc.header), content: doc.content }
+      }),
+  )
+
+  // ---------------------------------------------------------------- history / health
+
+  server.registerTool(
+    'doc_history',
+    { title: 'Revision history of a doc', description: 'Every revision: number, message, ticket, author, source, date.', inputSchema: { id: z.string() } },
+    async ({ id }) => guarded(() => api.history(id)),
+  )
+
+  server.registerTool(
+    'diff_doc',
+    {
+      title: 'Diff two revisions of a doc',
+      description: 'Header fields are serialized above the "---" line so header changes (summary, answers, refs, links) show in the diff too. Pass 0 for "before the doc existed".',
+      inputSchema: { id: z.string(), from: z.number().int().min(0), to: z.number().int().min(1) },
+    },
+    async ({ id, from, to }) => guarded(() => api.diff(id, from, to)),
+  )
+
+  server.registerTool(
+    'changelog',
+    {
+      title: 'Recent revisions across all docs',
+      description: 'What changed and why, newest first — filter by ticket or a day window.',
+      inputSchema: { sinceDays: z.number().int().positive().nullish(), ticket: z.string().nullish(), includeImports: z.boolean().default(false) },
+    },
+    async ({ sinceDays, ticket, includeImports }) => guarded(() => api.changelog(sinceDays ?? undefined, ticket ?? undefined, includeImports)),
+  )
+
+  server.registerTool(
+    'list_gaps',
+    { title: 'Open [DOC GAP] markers', description: 'Every unresolved doc gap across all docs (or one domain).', inputSchema: { domain: z.string().nullish() } },
+    async ({ domain }) => guarded(async () => (await api.gaps()).filter((g) => !domain || g.docId.startsWith(`${domain}/`) || g.docId === domain)),
+  )
+
+  server.registerTool(
+    'check_docs',
+    {
+      title: 'Doc health check',
+      description: 'Broken links, missing/oversized summaries, headers with no answers, stale .cursor/ paths, docs not linked from any index, links to deprecated docs.',
+      inputSchema: {},
+    },
+    async () => guarded(() => api.check()),
+  )
+
+  // ---------------------------------------------------------------- writes
+
+  server.registerTool(
+    'save_doc',
+    {
+      title: 'Create or update a doc',
+      description:
+        'Always send the FULL header (not a partial patch) and the full body. A change message is required; pass the ticket when the ' +
+        'change traces to one. For an existing doc, baseRevision must be its current revision number (from get_header/get_doc) — a stale ' +
+        'value is rejected with a conflict so you never silently overwrite someone else\'s edit; re-read and retry in that case. ' +
+        'For a brand-new doc, pass baseRevision: null.',
+      inputSchema: {
+        id: z.string().describe('domain/kebab-case-name, e.g. order/basket-lines; domain/README for a domain index'),
+        header: headerSchema,
+        content: z.string().describe('markdown body — do not repeat the title as an H1, it is added automatically'),
+        message: z.string().describe('required — why this changed'),
+        ticket: z.string().nullish(),
+        baseRevision: z.number().int().positive().nullable(),
+      },
+    },
+    async ({ id, header, content, message, ticket, baseRevision }) =>
+      guarded(() => api.save({ id, header: header as DocHeaderInput, content, message, ticket, baseRevision })),
+  )
+
+  server.registerTool(
+    'link_docs',
+    {
+      title: 'Create a typed link between two existing docs',
+      description: 'related/depends-on/conflicts-with are symmetric in meaning but stored on the "from" doc; supersedes also marks the target doc Deprecated.',
+      inputSchema: { from: z.string(), to: z.string(), type: z.enum(LINK_TYPES), message: z.string() },
+    },
+    async ({ from, to, type, message }) => guarded(() => api.link(from, to, type, message)),
+  )
+
+  server.registerTool(
+    'revert_doc',
+    {
+      title: 'Revert a doc to an earlier revision',
+      description: 'Adds a new revision with that old content — history is never rewritten.',
+      inputSchema: { id: z.string(), toRevision: z.number().int().positive(), message: z.string() },
+    },
+    async ({ id, toRevision, message }) => guarded(() => api.revert(id, toRevision, message)),
+  )
+}

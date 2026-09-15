@@ -1,0 +1,140 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+:root {
+  --paper: #f5f2ec;
+  --card: #fbf9f5;
+  --panel: #f0ece2;
+  --ink: #262420;
+  --ink-soft: #6a655c;
+  --rule: #d9d3c6;
+  --rule-strong: #c3bbaa;
+  --accent: #356598;
+  --accent-soft: #e2eaf3;
+  --warn: #975332;
+  --warn-soft: #f6e7dc;
+  --err: #b03a3a;
+  --ok: #456a45;
+  --ok-soft: #e3eedd;
+  --gap-bg: #fbf0da;
+  --gap-rule: #d9a55a;
+  --add-bg: #e3f0de;
+  --del-bg: #f6e1dc;
+  --claude: #a35933;
+  /* Solid avatar fills behind white text — deliberately darker than --claude/--accent (which are tuned per
+     theme to read as *text* on a light tint) so white-on-solid always clears 4.5:1 in both themes. */
+  --avatar-claude: #9c4c28;
+  --avatar-accent: #2f5a86;
+  --shadow: 0 1px 2px rgba(40, 34, 24, 0.08);
+  --shadow-pop: 0 8px 28px rgba(40, 34, 24, 0.16);
+  --t-fast: 120ms;
+  --t-base: 200ms;
+  --topbar-h: 52px;
+  --font: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --paper: #171613;
+    --card: #201e1a;
+    --panel: #1b1a16;
+    --ink: #e9e4d9;
+    --ink-soft: #9a9385;
+    --rule: #34312b;
+    --rule-strong: #46423a;
+    --accent: #7ca9d6;
+    --accent-soft: #22303e;
+    --warn: #d98a5f;
+    --warn-soft: #3a2a20;
+    --err: #e07a7a;
+    --ok: #7fae7f;
+    --ok-soft: #22301f;
+    --gap-bg: #3a3020;
+    --gap-rule: #b08540;
+    --add-bg: #1f3320;
+    --del-bg: #3a2320;
+    --claude: #e0916a;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-pop: 0 8px 28px rgba(0, 0, 0, 0.5);
+  }
+}
+:root[data-theme='dark'] {
+  --paper: #171613;
+  --card: #201e1a;
+  --panel: #1b1a16;
+  --ink: #e9e4d9;
+  --ink-soft: #9a9385;
+  --rule: #34312b;
+  --rule-strong: #46423a;
+  --accent: #7ca9d6;
+  --accent-soft: #22303e;
+  --warn: #d98a5f;
+  --warn-soft: #3a2a20;
+  --err: #e07a7a;
+  --ok: #7fae7f;
+  --ok-soft: #22301f;
+  --gap-bg: #3a3020;
+  --gap-rule: #b08540;
+  --add-bg: #1f3320;
+  --del-bg: #3a2320;
+  --claude: #e0916a;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-pop: 0 8px 28px rgba(0, 0, 0, 0.5);
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 13px;
+  line-height: 1.55;
+  font-variant-ligatures: none;
+  -webkit-font-smoothing: antialiased;
+}
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+button {
+  cursor: pointer;
+}
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.mono {
+  font-family: var(--font);
+  font-variant-numeric: tabular-nums;
+}
+
+/* One global kill-switch for anyone who asked the OS for less motion, instead of relying on every
+   animation/transition author to remember a local exception. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
