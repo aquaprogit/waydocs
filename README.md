@@ -80,6 +80,21 @@ publish step. It's a no-op inside this monorepo's own checkout (dev uses `script
 skippable via `WAYDOCS_SKIP_API_DOWNLOAD=1`, and never fails the `npm install` itself — a missing/failed
 download just means `mcp/src/index.ts`'s runtime error surfaces later instead.
 
-Not yet done: publishing `waydocs-mcp` to npm and cutting a real `v0.1.0` tag so a release (and its binaries)
-actually exists for the postinstall script to find — until then it downloads nothing and warns. A
-`waydocs serve --web --path <dir>` command for the optional local web viewer is also still open.
+`waydocs-mcp` is published on npm and `v0.1.0`'s binaries are live on the GitHub Release, so
+`npm install -g waydocs-mcp` works end to end today — verified against the real registry/release, not just
+locally. Register it per-project in `~/.claude.json`:
+
+```json
+{
+  "mcpServers": {
+    "waydocs": {
+      "command": "waydocs-mcp",
+      "args": ["--path", "<project path>"]
+    }
+  }
+}
+```
+
+Still open: a `waydocs serve --web --path <dir>` command for the optional local web viewer, and bumping
+`mcp/package.json`'s version + cutting a matching `vX.Y.Z` tag for every future release (the two must stay in
+sync since the postinstall script downloads `v<package version>`'s release assets).
