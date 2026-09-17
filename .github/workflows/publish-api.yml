@@ -1,0 +1,72 @@
+name: Publish waydocs-api
+
+# Builds the self-contained, single-file waydocs-api binary (see scripts/publish-api.ps1 for the local
+# equivalent) for every platform mcp/src/index.ts knows how to run, and — on a version tag — attaches them to
+# a GitHub Release so waydocs-mcp's install step can download the one it needs. Cross-publishing all RIDs
+# from ubuntu-latest works because .NET only needs the target RID's runtime pack (fetched from NuGet), not
+# that OS, to produce a self-contained build.
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish-api:
+    strategy:
+      matrix:
+        rid: [win-x64, linux-x64, linux-arm64, osx-x64, osx-arm64]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish self-contained ${{ matrix.rid }}
+        run: |
+          dotnet publish server/Waydocs.Api -c Release -r ${{ matrix.rid }} \
+            --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true \
+            -o out/${{ matrix.rid }}
+
+      - name: Archive
+        # Always tar.gz, even for win-x64 — Windows 10+ ships a bsdtar that extracts it fine, and it keeps
+        # mcp/scripts/download-api.mjs's extraction logic to one code path for every platform.
+        run: |
+          rm -f out/${{ matrix.rid }}/*.pdb
+          tar -czf "waydocs-api-${{ matrix.rid }}.tar.gz" -C out/${{ matrix.rid }} .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: waydocs-api-${{ matrix.rid }}
+          path: waydocs-api-${{ matrix.rid }}.tar.gz
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: publish-api
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Flatten artifacts
+        run: |
+          mkdir -p release
+          find artifacts -type f -name '*.tar.gz' -exec cp {} release/ \;
+          ls -la release
+
+      - uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: release/*
+          generate_release_notes: true

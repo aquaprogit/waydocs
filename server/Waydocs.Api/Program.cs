@@ -4,10 +4,12 @@ using Waydocs.Api.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// SQLite file: <repo-root>/data/docs.db by default (repo root = two levels above this project), same layout
-// as timesheet-editor.
+// The project this instance serves: `--path <dir>` picks which project's docs to open,
+// defaulting to the current directory. Its SQLite file lives at <path>/.waydocs/docs.db unless Docs:DbPath
+// overrides it explicitly.
+var projectPath = Path.GetFullPath(builder.Configuration["path"] ?? Environment.CurrentDirectory);
 var dbPath = builder.Configuration["Docs:DbPath"]
-    ?? Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, "..", "..", "data", "docs.db"));
+    ?? Path.Combine(projectPath, ".waydocs", "docs.db");
 Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
 
 builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlite($"Data Source={dbPath}"));

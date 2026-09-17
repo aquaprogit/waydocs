@@ -1,8 +1,8 @@
 # data
-data/*.db
-data/*.db-shm
-data/*.db-wal
-data/backups/
+.waydocs/*.db
+.waydocs/*.db-shm
+.waydocs/*.db-wal
+.waydocs/backups/
 
 # mock seed — real SD business docs, never commit
 web/src/mock/seed.json
@@ -10,12 +10,14 @@ web/src/mock/seed.json
 # .NET
 [Bb]in/
 [Oo]bj/
+nupkg/
 *.user
 
 # node
 node_modules/
 web/dist/
 mcp/dist/
+mcp/bin/
 *.log
 scripts/logs/
 

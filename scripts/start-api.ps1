@@ -3,4 +3,4 @@ $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 Set-Location (Join-Path $repo 'server\Waydocs.Api')
 $env:ASPNETCORE_ENVIRONMENT = 'Development'
-dotnet run --urls http://localhost:5180
+dotnet run --urls http://localhost:5180 -- --path "$repo"

@@ -1,15 +1,25 @@
 {
-  "name": "@waydocs/mcp",
+  "name": "waydocs-mcp",
   "version": "0.1.0",
-  "private": true,
+  "description": "Local MCP server for Waydocs — versioned, agent-navigable project docs.",
   "type": "module",
   "bin": {
     "waydocs-mcp": "dist/index.js"
   },
+  "files": [
+    "dist",
+    "scripts"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc -w",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "postinstall": "node ./scripts/download-api.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aquaprogit/waydocs.git",
+    "directory": "mcp"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
