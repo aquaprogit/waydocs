@@ -1,10 +1,10 @@
 name: Publish waydocs-api
 
-# Builds the self-contained, single-file waydocs-api binary (see scripts/publish-api.ps1 for the local
-# equivalent) for every platform mcp/src/index.ts knows how to run, and — on a version tag — attaches them to
-# a GitHub Release so waydocs-mcp's install step can download the one it needs. Cross-publishing all RIDs
-# from ubuntu-latest works because .NET only needs the target RID's runtime pack (fetched from NuGet), not
-# that OS, to produce a self-contained build.
+# Builds the self-contained, single-file waydocs-api binary — with the web UI built into wwwroot — for every
+# platform mcp/src/index.ts knows how to run (see scripts/publish-api.ps1 for the local equivalent), and on a
+# version tag attaches them to a GitHub Release so waydocs-mcp's install step can download the one it needs.
+# Cross-publishing all RIDs from ubuntu-latest works because .NET only needs the target RID's runtime pack
+# (fetched from NuGet), not that OS, to produce a self-contained build.
 
 on:
   push:
@@ -27,6 +27,18 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build web UI into wwwroot
+        run: |
+          cd web
+          npm ci
+          npm run build
+          rm -rf ../server/Waydocs.Api/wwwroot
+          cp -r dist ../server/Waydocs.Api/wwwroot
 
       - name: Publish self-contained ${{ matrix.rid }}
         run: |

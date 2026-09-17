@@ -2,7 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using Waydocs.Api;
 using Waydocs.Api.Data;
 
-var builder = WebApplication.CreateBuilder(args);
+// ContentRootPath is pinned to the exe's own directory (not cwd) so wwwroot — the bundled web UI, when
+// present — resolves regardless of where the process is launched from. --path (below) is unrelated: it picks
+// which project's docs to serve, not where this binary's own static assets live.
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions { Args = args, ContentRootPath = AppContext.BaseDirectory });
 
 // The project this instance serves: `--path <dir>` picks which project's docs to open,
 // defaulting to the current directory. Its SQLite file lives at <path>/.waydocs/docs.db unless Docs:DbPath
@@ -25,6 +28,11 @@ using (var scope = app.Services.CreateScope())
     scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.Migrate();
 
 app.UseCors();
+
+// Serves web/dist when it's been copied into wwwroot (see scripts/publish-api.ps1 / the CI workflow) — a
+// no-op if wwwroot doesn't exist, e.g. a plain dev `dotnet run` with no bundled web build.
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 // One place to turn a validation/conflict/not-found ApiException into the {error} JSON shape the web app's
 // httpApi.ts (and the MCP client) already know how to read.
@@ -84,6 +92,10 @@ api.MapGet("/source", async (DocService svc) => new { source = await svc.SourceA
 
 api.MapPost("/import", async (List<ImportItem> items, DocService svc) => await svc.ImportAsync(items));
 
-app.MapGet("/", () => Results.Redirect("/api/docs"));
+// Minimal-hosting routing is matched before this file's other middleware runs, so an unconditional MapGet("/")
+// would win over UseStaticFiles's index.html even when a web build is bundled — only register the API-only
+// fallback when there's no bundled UI to serve instead.
+if (!File.Exists(Path.Combine(app.Environment.WebRootPath ?? "", "index.html")))
+    app.MapGet("/", () => Results.Redirect("/api/docs"));
 
 app.Run();

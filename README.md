@@ -73,18 +73,23 @@ cd waydocs
 WAYDOCS_API_URL=http://127.0.0.1:<port from your running waydocs-mcp> WAYDOCS_SOURCE=<path to your docs folder> node scripts/import.mjs
 ```
 
-### Optional: browsing docs in a web UI
+### Browsing docs in a web UI
 
-A full React UI (browse, edit, history/diff, dependency graph) exists in this repo (`web/`) but isn't
-packaged for global install yet — see [Roadmap](#roadmap). For now it's a source-repo dev tool; run it with
-`.\scripts\start-web.ps1` after cloning (see [Developing Waydocs itself](#developing-waydocs-itself)).
+```bash
+waydocs-mcp web --path <project path>
+```
+
+Starts the same API used by MCP mode — with the full React UI (browse, edit, history/diff, dependency graph)
+bundled in — on a free local port, and opens it in your default browser. Ctrl+C stops it; nothing is left
+running in the background.
 
 ## How it works
 
 ```
-server/Waydocs.Api/   .NET 10 minimal API + EF Core SQLite — the actual doc store
+server/Waydocs.Api/   .NET 10 minimal API + EF Core SQLite — the actual doc store, with web/dist served as
+                      static files (wwwroot) when bundled in at publish time
 web/                  React 19 + Vite — browse, edit, history/diff, graph
-mcp/                  The npm package (waydocs-mcp) — stdio MCP server + install-time API downloader
+mcp/                  The npm package (waydocs-mcp) — CLI (mcp/web modes) + install-time API downloader
 scripts/              Dev scripts (start-api.ps1, start-web.ps1, build-mcp.ps1, publish-api.ps1, import.mjs)
 .waydocs/docs.db      Per-project SQLite file, created at --path (defaults to cwd)
 ```
@@ -120,14 +125,13 @@ project consumes it — MCP servers only load their code once, at session start.
 1. Bump the version in `mcp/package.json` — it must match the git tag, since the postinstall downloader fetches
    release `v<package version>`'s assets.
 2. `git tag vX.Y.Z && git push origin vX.Y.Z` — this triggers
-   [`.github/workflows/publish-api.yml`](.github/workflows/publish-api.yml), which cross-publishes
-   self-contained `waydocs-api` binaries for win-x64/linux-x64/linux-arm64/osx-x64/osx-arm64 (all built from
-   `ubuntu-latest` — a RID's runtime pack comes from NuGet, not the host OS) and attaches them to a GitHub
-   Release. `workflow_dispatch` lets you run it manually without tagging, for a test build.
+   [`.github/workflows/publish-api.yml`](.github/workflows/publish-api.yml), which builds the web UI, bundles
+   it into each self-contained `waydocs-api` binary (win-x64/linux-x64/linux-arm64/osx-x64/osx-arm64, all built
+   from `ubuntu-latest` — a RID's runtime pack comes from NuGet, not the host OS), and attaches them to a
+   GitHub Release. `workflow_dispatch` lets you run it manually without tagging, for a test build.
 3. `cd mcp && npm publish` once the release's assets are up, so `npm install -g waydocs-mcp` matches a release
    that actually exists.
 
 ## Roadmap
 
-- `waydocs serve --web --path <dir>` — package the web UI for a global install, not just this source repo.
 - A `LICENSE` file (currently unset).

@@ -11,6 +11,7 @@ web/src/mock/seed.json
 [Bb]in/
 [Oo]bj/
 nupkg/
+server/Waydocs.Api/wwwroot/
 *.user
 
 # node

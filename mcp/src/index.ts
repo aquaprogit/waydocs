@@ -10,11 +10,29 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 function parseArgs(argv: string[]) {
-  const out: { path?: string } = {}
-  for (let i = 0; i < argv.length; i++) {
-    if (argv[i] === '--path') out.path = argv[++i]
+  // `waydocs-mcp --path <dir>` (no subcommand, existing MCP registrations) defaults to 'mcp'; a bare leading
+  // word switches mode, e.g. `waydocs-mcp web --path <dir>`.
+  let command: 'mcp' | 'web' = 'mcp'
+  let rest = argv
+  if (argv[0] === 'web' || argv[0] === 'mcp') {
+    command = argv[0]
+    rest = argv.slice(1)
+  }
+  const out: { command: 'mcp' | 'web'; path?: string } = { command }
+  for (let i = 0; i < rest.length; i++) {
+    if (rest[i] === '--path') out.path = rest[++i]
   }
   return out
+}
+
+function openBrowser(url: string) {
+  const [cmd, args] =
+    process.platform === 'win32'
+      ? ['cmd', ['/c', 'start', '', url]]
+      : process.platform === 'darwin'
+        ? ['open', [url]]
+        : ['xdg-open', [url]]
+  spawn(cmd, args, { stdio: 'ignore', detached: true }).unref()
 }
 
 function freePort(): Promise<number> {
@@ -129,10 +147,7 @@ async function startOwnApi(projectPath: string): Promise<string> {
   return url
 }
 
-async function main() {
-  const args = parseArgs(process.argv.slice(2))
-  const projectPath = path.resolve(args.path ?? process.cwd())
-
+async function runMcp(projectPath: string) {
   if (!process.env.WAYDOCS_API_URL) {
     process.env.WAYDOCS_API_URL = await startOwnApi(projectPath)
   }
@@ -149,6 +164,24 @@ async function main() {
 
   const transport = new StdioServerTransport()
   await server.connect(transport)
+}
+
+// `waydocs-mcp web --path <dir>`: starts the API (same resolution as MCP mode) with its bundled web UI, opens
+// it in the default browser, and stays alive until Ctrl+C — for a human browsing docs, not an agent.
+async function runWeb(projectPath: string) {
+  const url = process.env.WAYDOCS_API_URL ?? (await startOwnApi(projectPath))
+  console.log(`Waydocs is running at ${url}`)
+  console.log('Press Ctrl+C to stop.')
+  openBrowser(url)
+  await new Promise(() => {}) // SIGINT/SIGTERM handlers registered in startOwnApi exit the process
+}
+
+async function main() {
+  const args = parseArgs(process.argv.slice(2))
+  const projectPath = path.resolve(args.path ?? process.cwd())
+
+  if (args.command === 'web') await runWeb(projectPath)
+  else await runMcp(projectPath)
 }
 
 await main()
