@@ -8,10 +8,6 @@ const REF_ICON: Record<string, string> = { ticket: '#', service: 'svc', endpoint
 const INCOMING: Record<LinkType, string> = {
   'part-of': 'contains',
   mentions: 'mentioned by',
-  related: 'related',
-  'depends-on': 'needed by',
-  supersedes: 'superseded by',
-  'conflicts-with': 'conflicts with',
 }
 
 /** Refs and graph links — secondary metadata a reader rarely needs first, so this sits below the body rather
@@ -19,11 +15,10 @@ const INCOMING: Record<LinkType, string> = {
 export default function DocGraphPanel({ header: h, links }: { header: DocHeader; links?: DocLinks }) {
   const [openRef, setOpenRef] = useState<string | null>(null)
   const shared = (r: DocRef) => links?.sharedRefs.find((s) => s.ref.type === r.type && s.ref.value === r.value)
-  const manualOut = links?.outgoing.filter((e) => !e.auto) ?? []
-  const autoOut = links?.outgoing.filter((e) => e.auto) ?? []
+  const outgoing = links?.outgoing ?? []
   const incoming = links?.incoming ?? []
 
-  if (!h.refs.length && manualOut.length + autoOut.length + incoming.length === 0) return null
+  if (!h.refs.length && outgoing.length + incoming.length === 0) return null
 
   return (
     <section className="graph-panel">
@@ -63,24 +58,18 @@ export default function DocGraphPanel({ header: h, links }: { header: DocHeader;
         </div>
       )}
 
-      {manualOut.length + autoOut.length + incoming.length > 0 && (
+      {outgoing.length + incoming.length > 0 && (
         <div className="hc-row">
           <h4>Graph</h4>
           <div className="chips">
-            {manualOut.map((e) => (
-              <a key={`o-${e.type}-${e.to}`} className={`chip link lt-${e.type}`} href={href('doc', e.to)}>
-                <span className="lt">{e.type} →</span>
-                {e.title}
-              </a>
-            ))}
-            {autoOut.map((e) => (
-              <a key={`a-${e.type}-${e.to}`} className="chip link auto" href={href('doc', e.to)}>
+            {outgoing.map((e) => (
+              <a key={`o-${e.type}-${e.to}`} className="chip link auto" href={href('doc', e.to)}>
                 <span className="lt">{e.type} →</span>
                 {e.title}
               </a>
             ))}
             {incoming.map((e) => (
-              <a key={`i-${e.type}-${e.from}`} className={`chip link in ${e.auto ? 'auto' : `lt-${e.type}`}`} href={href('doc', e.from)}>
+              <a key={`i-${e.type}-${e.from}`} className="chip link in auto" href={href('doc', e.from)}>
                 <span className="lt">← {INCOMING[e.type]}</span>
                 {e.title}
               </a>

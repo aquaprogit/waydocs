@@ -3,11 +3,6 @@ export interface DocRef {
   value: string
 }
 
-export interface DocLink {
-  to: string
-  type: 'depends-on' | 'related' | 'supersedes' | 'conflicts-with'
-}
-
 export interface SectionInfo {
   heading: string
   slug: string
@@ -20,12 +15,9 @@ export interface DocHeader {
   domain: string
   title: string
   summary: string
-  kind: 'DomainIndex' | 'Feature' | 'Reference' | 'QaLog' | 'Backlog' | 'Plan'
   status: 'Current' | 'Draft' | 'Deprecated'
   answers: string[]
-  notCovered: string[]
   refs: DocRef[]
-  links: DocLink[]
   revision: number
   currentRevision: number
   updated: string
@@ -58,7 +50,6 @@ export interface GraphEdge {
   from: string
   to: string
   type: string
-  auto: boolean
 }
 
 export interface GraphData {
@@ -106,10 +97,7 @@ export interface SaveResult {
 export interface DocHeaderInput {
   title: string
   summary: string
-  kind: DocHeader['kind']
   status: DocHeader['status']
   answers: string[]
-  notCovered: string[]
   refs: DocRef[]
-  links: DocLink[]
 }

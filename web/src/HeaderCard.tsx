@@ -27,16 +27,6 @@ export default function HeaderCard({ header: h }: { header: DocHeader }) {
             <p className="muted small">None yet — list the questions this doc answers so agents can route to it.</p>
           )}
         </div>
-        {h.notCovered.length > 0 && (
-          <div>
-            <h4>Not covered here</h4>
-            <ul className="nc">
-              {h.notCovered.map((a, i) => (
-                <li key={i}>{a}</li>
-              ))}
-            </ul>
-          </div>
-        )}
       </div>
 
       {h.sections.length > 0 && (

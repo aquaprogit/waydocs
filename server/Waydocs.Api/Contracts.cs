@@ -5,21 +5,19 @@ namespace Waydocs.Api;
 
 public record DocRefDto(string Type, string Value);
 
-public record DocLinkDto(string To, string Type);
-
 public record SectionInfoDto(string Heading, string Slug, int Level, int Tokens);
 
 public record DocHeaderDto(
-    string Id, string Domain, string Title, string Summary, string Kind, string Status,
-    List<string> Answers, List<string> NotCovered, List<DocRefDto> Refs, List<DocLinkDto> Links,
+    string Id, string Domain, string Title, string Summary, string Status,
+    List<string> Answers, List<DocRefDto> Refs,
     int Revision, int CurrentRevision, string Updated, string UpdatedBy,
     int Tokens, int HeaderTokens, int MapTokens, List<SectionInfoDto> Sections, int OpenGaps);
 
 public record DocFullDto(DocHeaderDto Header, string Content);
 
 public record DocHeaderInput(
-    string Title, string Summary, string Kind, string Status,
-    List<string> Answers, List<string> NotCovered, List<DocRefDto> Refs, List<DocLinkDto> Links);
+    string Title, string Summary, string Status,
+    List<string> Answers, List<DocRefDto> Refs);
 
 public record SaveRequest(
     string Id, DocHeaderInput Header, string Content, string Message, string? Ticket, int? BaseRevision);
@@ -37,10 +35,10 @@ public record DiffResult(string Before, string After);
 
 public record SearchHitDto(DocHeaderDto Header, double Score, string Field, string Snippet);
 
-public record GraphEdgeDto(string From, string To, string Type, bool Auto);
+public record GraphEdgeDto(string From, string To, string Type);
 public record GraphDataDto(List<DocHeaderDto> Nodes, List<GraphEdgeDto> Edges);
 
-public record TitledEdgeDto(string From, string To, string Type, bool Auto, string Title);
+public record TitledEdgeDto(string From, string To, string Type, string Title);
 public record DocStubDto(string Id, string Title);
 public record SharedRefDto(DocRefDto Ref, List<DocStubDto> Docs);
 public record DocLinksDto(List<TitledEdgeDto> Outgoing, List<TitledEdgeDto> Incoming, List<SharedRefDto> SharedRefs);
@@ -55,11 +53,10 @@ public record GapItemDto(string DocId, string Title, string Text);
 
 public record CheckIssueDto(string DocId, string Severity, string Kind, string Detail);
 
-public record LinkRequest(string From, string To, string Type, string Message);
 public record RevertRequest(int To, string Message);
 
 public record ImportItem(
-    string Id, string Title, string Summary, string Kind, List<DocRefDto> Refs, string Content, string SourcePath);
+    string Id, string Title, string Summary, List<DocRefDto> Refs, string Content, string SourcePath);
 public record ImportResult(int Imported, int Skipped);
 
 public class ApiException(int status, string message) : Exception(message)

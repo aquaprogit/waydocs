@@ -5,11 +5,11 @@
 
 **Versioned documentation your AI agent can navigate without reading whole files.**
 
-Waydocs gives every doc a **header** — title, summary, the questions it answers, what it doesn't cover, refs,
-typed links — that an agent reads first to decide whether to open the body or just one section. Docs form a
-**graph** (`part-of`, `mentions`, `depends-on`, `related`, `supersedes`, `conflicts-with`) plus shared entity
-refs of any project-defined kind — tickets, services, endpoints, whatever fits your project. Every save is an
-append-only **revision** with a required change message, so history is a real changelog, not just diffs.
+Waydocs gives every doc a **header** — title, summary, the questions it answers, refs — that an agent reads
+first to decide whether to open the body or just one section. Docs form a **graph** automatically (`part-of`
+folder membership, `mentions` inline links) plus shared entity refs of any project-defined kind — tickets,
+services, endpoints, whatever fits your project. Every save is an append-only **revision** with a required
+change message, so history is a real changelog, not just diffs.
 
 It runs entirely on your machine — one MCP server per project, its own local SQLite file, no account, no
 server to host, no data leaving your computer.
@@ -48,7 +48,7 @@ return an (empty, for a new project) list.
 
 | Tool | What it's for |
 |---|---|
-| `docs_map` | Cheapest view of every doc — id, title, summary, kind, status. Always call this first. |
+| `docs_map` | Cheapest view of every doc — id, title, summary, status. Always call this first. |
 | `search_docs` | Rank docs by title/summary/answers/refs for a question or keywords. |
 | `find_docs` | Exact lookup by ref entity — ticket, service, endpoint, or any project-defined type. |
 | `get_neighbors` | Docs connected to one doc in the graph, 1–3 hops deep. |
@@ -58,7 +58,6 @@ return an (empty, for a new project) list.
 | `changelog` | Recent revisions across all docs, filterable by ticket or day window. |
 | `list_gaps` / `check_docs` | Open `[DOC GAP]` markers and a health check (broken links, missing summaries, etc.). |
 | `save_doc` | Create or update a doc — full header + body, with optimistic-concurrency conflict checks. |
-| `link_docs` | Create a typed link between two existing docs. |
 | `revert_doc` | Revert a doc to an earlier revision (adds a new revision — history is never rewritten). |
 
 ### Bringing in docs you already have

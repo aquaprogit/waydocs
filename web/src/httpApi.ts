@@ -10,7 +10,6 @@ import {
   type GapItem,
   type GraphData,
   type HistoryItem,
-  type ManualLinkType,
   type RefType,
   type SaveRequest,
   type SaveResult,
@@ -97,15 +96,6 @@ export const httpApi = {
     return r
   },
 
-  async link(from: string, to: string, type: ManualLinkType, message: string, author: Author = 'Human', source: Source = 'web'): Promise<SaveResult> {
-    const r = await req<SaveResult>(`/link${qs({ author, source })}`, {
-      method: 'POST',
-      body: JSON.stringify({ from, to, type, message }),
-    })
-    if (r.changed) bump()
-    return r
-  },
-
   async revert(id: string, to: number, message: string, author: Author = 'Human', source: Source = 'web'): Promise<SaveResult> {
     const r = await req<SaveResult>(`/revert${qs({ id, author, source })}`, {
       method: 'POST',
@@ -129,12 +119,9 @@ export const httpApi = {
     const header = {
       title: doc.header.title,
       summary: doc.header.summary,
-      kind: doc.header.kind,
       status: doc.header.status,
       answers: doc.header.answers,
-      notCovered: doc.header.notCovered,
       refs: doc.header.refs,
-      links: doc.header.links,
     }
     const content = `${doc.content.trimEnd()}\n\n> **[DOC GAP]** *Re-verify after the latest release (simulated agent note, ${time}).*\n> Expected source: mock MCP edit.\n`
     return httpApi.save(

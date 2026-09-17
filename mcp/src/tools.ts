@@ -4,24 +4,19 @@ import { ApiError, api } from './client.js'
 import { agentHeader, mapEntry } from './shape.js'
 import type { DocHeaderInput } from './types.js'
 
-const LINK_TYPES = ['depends-on', 'related', 'supersedes', 'conflicts-with'] as const
-const KINDS = ['DomainIndex', 'Feature', 'Reference', 'QaLog', 'Backlog', 'Plan'] as const
 const STATUSES = ['Current', 'Draft', 'Deprecated'] as const
 
 const headerSchema = z.object({
   title: z.string(),
   summary: z.string().max(400).describe('1-3 sentences — what an agent reads first to decide whether to open the doc'),
-  kind: z.enum(KINDS),
   status: z.enum(STATUSES),
   answers: z.array(z.string()).max(8).describe('questions this doc answers'),
-  notCovered: z.array(z.string()).describe('nearby topics that live in another doc'),
   refs: z.array(
     z.object({
       type: z.string().describe('entity kind this ref points at — project-defined, e.g. "ticket", "service", "endpoint"'),
       value: z.string(),
     }),
   ),
-  links: z.array(z.object({ to: z.string(), type: z.enum(LINK_TYPES) })),
 })
 
 type Json = Record<string, unknown>
@@ -44,7 +39,7 @@ export function registerTools(server: McpServer) {
     {
       title: 'Map of every doc',
       description:
-        'The cheapest possible view of every doc: id, title, summary, kind, status, body token count — no answers, refs, links or body. ' +
+        'The cheapest possible view of every doc: id, title, summary, status, body token count — no answers, refs, or body. ' +
         'Call this first for any question; only open the docs that look relevant via get_header or get_doc.',
       inputSchema: { domain: z.string().nullish().describe('filter to one domain, e.g. "order"') },
     },
@@ -80,8 +75,8 @@ export function registerTools(server: McpServer) {
     {
       title: 'Docs connected to one doc in the graph',
       description:
-        'part-of/mentions (automatic) plus related/depends-on/supersedes/conflicts-with (typed, author-set) edges touching this doc, ' +
-        'in both directions. depth 2 also includes neighbors-of-neighbors.',
+        'part-of (folder membership) and mentions (inline links) edges touching this doc, in both directions. ' +
+        'depth 2 also includes neighbors-of-neighbors.',
       inputSchema: { id: z.string(), depth: z.number().int().min(1).max(3).default(1) },
     },
     async ({ id, depth }) =>
@@ -91,7 +86,7 @@ export function registerTools(server: McpServer) {
         if (!titleOf.has(id)) throw new ApiError(`No doc '${id}'.`)
         let frontier = new Set([id])
         const seen = new Set([id])
-        const edgesOut: { from: string; to: string; type: string; auto: boolean }[] = []
+        const edgesOut: { from: string; to: string; type: string }[] = []
         for (let d = 0; d < depth; d++) {
           const next = new Set<string>()
           for (const e of graph.edges) {
@@ -114,7 +109,7 @@ export function registerTools(server: McpServer) {
     'get_header',
     {
       title: 'Full header of one doc (no body)',
-      description: 'Summary, answers, not-covered, refs, links, section list with per-section token counts — everything except the markdown body.',
+      description: 'Summary, answers, refs, section list with per-section token counts — everything except the markdown body.',
       inputSchema: { id: z.string() },
     },
     async ({ id }) => guarded(async () => agentHeader((await api.getDoc(id)).header)),
@@ -151,7 +146,7 @@ export function registerTools(server: McpServer) {
     'diff_doc',
     {
       title: 'Diff two revisions of a doc',
-      description: 'Header fields are serialized above the "---" line so header changes (summary, answers, refs, links) show in the diff too. Pass 0 for "before the doc existed".',
+      description: 'Header fields are serialized above the "---" line so header changes (summary, answers, refs) show in the diff too. Pass 0 for "before the doc existed".',
       inputSchema: { id: z.string(), from: z.number().int().min(0), to: z.number().int().min(1) },
     },
     async ({ id, from, to }) => guarded(() => api.diff(id, from, to)),
@@ -177,7 +172,7 @@ export function registerTools(server: McpServer) {
     'check_docs',
     {
       title: 'Doc health check',
-      description: 'Broken links, missing/oversized summaries, headers with no answers, stale .cursor/ paths, docs not linked from any index, links to deprecated docs.',
+      description: 'Broken links, missing/oversized summaries, headers with no answers, stale .cursor/ paths, docs not linked from any index.',
       inputSchema: {},
     },
     async () => guarded(() => api.check()),
@@ -205,16 +200,6 @@ export function registerTools(server: McpServer) {
     },
     async ({ id, header, content, message, ticket, baseRevision }) =>
       guarded(() => api.save({ id, header: header as DocHeaderInput, content, message, ticket, baseRevision })),
-  )
-
-  server.registerTool(
-    'link_docs',
-    {
-      title: 'Create a typed link between two existing docs',
-      description: 'related/depends-on/conflicts-with are symmetric in meaning but stored on the "from" doc; supersedes also marks the target doc Deprecated.',
-      inputSchema: { from: z.string(), to: z.string(), type: z.enum(LINK_TYPES), message: z.string() },
-    },
-    async ({ from, to, type, message }) => guarded(() => api.link(from, to, type, message)),
   )
 
   server.registerTool(

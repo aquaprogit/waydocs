@@ -93,9 +93,9 @@ export default function EditPage({ id, headers }: { id: string; headers: DocHead
         <button className="panel-head" onClick={() => setHeaderOpen((o) => !o)} aria-expanded={headerOpen}>
           <span className="caret">{headerOpen ? '▾' : '▸'}</span>
           <b>Header</b>
-          <span className="muted small">summary, answers, refs and links — what agents read first</span>
+          <span className="muted small">summary, answers and refs — what agents read first</span>
         </button>
-        {headerOpen && <HeaderForm value={header} onChange={setHeader} docId={id} headers={headers} known={known.data} />}
+        {headerOpen && <HeaderForm value={header} onChange={setHeader} known={known.data} />}
       </section>
 
       <section className="panel editor-panel">

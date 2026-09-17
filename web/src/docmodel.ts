@@ -1,4 +1,4 @@
-import type { DocHeader, DocHeaderInput, DocKind, GraphEdge, SectionInfo } from './types'
+import type { DocHeader, DocHeaderInput, GraphEdge, SectionInfo } from './types'
 
 export const idToPath = (id: string) => (id === 'README' ? 'README.md' : `domains/${id}.md`)
 
@@ -149,13 +149,13 @@ export function extractGaps(content: string): string[] {
 export function autoEdges(id: string, content: string, ids: Set<string>): GraphEdge[] {
   const edges: GraphEdge[] = []
   const parent = parentIndex(id)
-  if (parent && ids.has(parent)) edges.push({ from: id, to: parent, type: 'part-of', auto: true })
+  if (parent && ids.has(parent)) edges.push({ from: id, to: parent, type: 'part-of' })
   const seen = new Set<string>()
   for (const href of markdownLinks(content)) {
     const r = resolveHref(id, href)
     if (r.kind !== 'doc' || r.id === id || !ids.has(r.id) || seen.has(r.id)) continue
     seen.add(r.id)
-    edges.push({ from: id, to: r.id, type: 'mentions', auto: true })
+    edges.push({ from: id, to: r.id, type: 'mentions' })
   }
   return edges
 }
@@ -168,27 +168,21 @@ export function normalizeHeader(h: DocHeaderInput): DocHeaderInput {
   return {
     title: h.title.trim(),
     summary: h.summary.trim().replace(/\s+/g, ' '),
-    kind: h.kind,
     status: h.status,
     answers: h.answers.map((a) => a.trim()).filter(Boolean),
-    notCovered: h.notCovered.map((a) => a.trim()).filter(Boolean),
     refs: uniq(
       h.refs.map((r) => ({ type: r.type, value: r.value.trim() })).filter((r) => r.value),
       (r) => `${r.type}:${r.value}`,
     ),
-    links: uniq(h.links, (l) => `${l.type}:${l.to}`),
   }
 }
 
 export const pickInput = (h: DocHeaderInput): DocHeaderInput => ({
   title: h.title,
   summary: h.summary,
-  kind: h.kind,
   status: h.status,
   answers: [...h.answers],
-  notCovered: [...h.notCovered],
   refs: h.refs.map((r) => ({ ...r })),
-  links: h.links.map((l) => ({ ...l })),
 })
 
 /** Header + body as one text blob so a line diff shows header changes too. */
@@ -197,17 +191,11 @@ export function serializeForDiff(h: DocHeaderInput, content: string): string {
   return [
     `title: ${h.title}`,
     `summary: ${h.summary}`,
-    `kind: ${h.kind}`,
     `status: ${h.status}`,
     ...list('answers', h.answers),
-    ...list('notCovered', h.notCovered),
     ...list(
       'refs',
       h.refs.map((r) => `${r.type}: ${r.value}`),
-    ),
-    ...list(
-      'links',
-      h.links.map((l) => `${l.type} → ${l.to}`),
     ),
     '---',
     content.trimEnd(),
@@ -217,7 +205,7 @@ export function serializeForDiff(h: DocHeaderInput, content: string): string {
 
 /** One `docs_map` row — the cheapest routing view of a doc. */
 export function mapEntry(h: DocHeader) {
-  return { id: h.id, title: h.title, summary: h.summary, kind: h.kind, status: h.status, tokens: h.tokens }
+  return { id: h.id, title: h.title, summary: h.summary, status: h.status, tokens: h.tokens }
 }
 
 /** What `get_header` / `search_docs` return to an agent — never the body. */
@@ -226,12 +214,9 @@ export function agentHeader(h: DocHeader) {
     id: h.id,
     title: h.title,
     summary: h.summary,
-    kind: h.kind,
     status: h.status,
     answers: h.answers,
-    notCovered: h.notCovered,
     refs: h.refs.map((r) => `${r.type}:${r.value}`),
-    links: h.links.map((l) => `${l.type} → ${l.to}`),
     sections: h.sections.map((s) => ({ heading: s.heading, tokens: s.tokens })),
     tokens: h.tokens,
     revision: h.revision,
@@ -258,23 +243,10 @@ export function relTime(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-export const KIND_LABEL: Record<DocKind, string> = {
-  DomainIndex: 'Index',
-  Feature: 'Feature',
-  Reference: 'Reference',
-  QaLog: 'Q&A log',
-  Backlog: 'Backlog',
-  Plan: 'Plan',
-}
+export const DOMAIN_INDEX_TEMPLATE =
+  '## Purpose\n\n\n## Documentation index\n\n| Document | Topics |\n|----------|--------|\n\n## Related APIs\n\n## Related Services\n'
 
-export const TEMPLATES: Record<DocKind, string> = {
-  DomainIndex: '## Purpose\n\n\n## Documentation index\n\n| Document | Topics |\n|----------|--------|\n\n## Related APIs\n\n## Related Services\n',
-  Feature:
-    '## Purpose\n\n\n## Main Rules\n\n\n## Edge Cases\n\n\n## Workflow\n\n1. \n\n## Related APIs\n\n\n## Related Services\n\n\n## Known Problems\n\n\n## Examples\n',
-  Reference: '## Purpose\n\n\n## Mapping\n\n| Source | Target | Notes |\n|--------|--------|-------|\n',
-  QaLog: '## Purpose\n\n\n## Entries\n\n### YYYY-MM-DD — Question\n\n**Answer (source):** \n',
-  Backlog: '## Purpose\n\n\n## Tickets\n\n| ID | Title | State | Notes |\n|----|-------|-------|-------|\n',
-  Plan: '## Purpose\n\n\n## Steps\n\n1. \n\n## Open questions\n',
-}
+export const DEFAULT_TEMPLATE =
+  '## Purpose\n\n\n## Main Rules\n\n\n## Edge Cases\n\n\n## Workflow\n\n1. \n\n## Related APIs\n\n\n## Related Services\n\n\n## Known Problems\n\n\n## Examples\n'
 
 export const GAP_BLOCK = '> **[DOC GAP]** *What is unknown?*\n> Expected source: ticket #XXXX / PO contact / not yet investigated.'

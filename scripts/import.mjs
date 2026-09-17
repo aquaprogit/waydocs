@@ -26,15 +26,6 @@ function pathToId(rel) {
   return m ? m[1] : null
 }
 
-function kindOf(id) {
-  if (id === 'README' || id.endsWith('/README')) return 'DomainIndex'
-  if (/qa-log/.test(id)) return 'QaLog'
-  if (/active-tickets/.test(id)) return 'Backlog'
-  if (/implementation-plan/.test(id)) return 'Plan'
-  if (/(column-mapping|terminology|front-system-codes|vat-code-mapping|sort-pad-columns)/.test(id)) return 'Reference'
-  return 'Feature'
-}
-
 const stripInline = (s) =>
   s
     .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
@@ -119,12 +110,9 @@ async function main() {
     const header = {
       title,
       summary: summaryOf(content),
-      kind: kindOf(id),
       status: 'Current',
       answers: [],
-      notCovered: [],
       refs: refsOf(content),
-      links: [],
     }
     try {
       const r = await apiSave(id, header, content)

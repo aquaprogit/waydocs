@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { KIND_LABEL, displayName, domainColor } from './docmodel'
+import { displayName, domainColor } from './docmodel'
 import { href } from './router'
 import type { DocHeader } from './types'
 
@@ -80,7 +80,6 @@ export default function Sidebar({ headers, activeId }: { headers: DocHeader[]; a
                       title={h.summary}
                     >
                       <span className="si-title">{label(h)}</span>
-                      {h.kind !== 'Feature' && h.kind !== 'DomainIndex' && <span className="tag">{KIND_LABEL[h.kind]}</span>}
                       {h.status === 'Draft' && <span className="tag draft">Draft</span>}
                       {h.openGaps > 0 && (
                         <span className="gapdot" title={`${h.openGaps} open doc gap(s)`}>

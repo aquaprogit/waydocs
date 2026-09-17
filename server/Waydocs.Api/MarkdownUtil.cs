@@ -169,7 +169,7 @@ public static partial class MarkdownUtil
         return id != null ? new Resolved("doc", id, anchor, null) : new Resolved("outside", null, null, pathPart);
     }
 
-    public sealed record GraphEdge(string From, string To, string Type, bool Auto);
+    public sealed record GraphEdge(string From, string To, string Type);
 
     /// <summary>part-of (folder membership) + mentions (inline links) — the two automatically-derived edge types.
     /// Never stored: recomputed from Doc.Domain and Content at read time, same as the mock prototype.</summary>
@@ -177,13 +177,13 @@ public static partial class MarkdownUtil
     {
         var edges = new List<GraphEdge>();
         var parent = ParentIndex(id);
-        if (parent != null && ids.Contains(parent)) edges.Add(new GraphEdge(id, parent, "part-of", true));
+        if (parent != null && ids.Contains(parent)) edges.Add(new GraphEdge(id, parent, "part-of"));
         var seen = new HashSet<string>();
         foreach (var href in MarkdownLinks(content))
         {
             var r = ResolveHref(id, href);
             if (r.Kind != "doc" || r.Id == id || r.Id == null || !ids.Contains(r.Id) || !seen.Add(r.Id)) continue;
-            edges.Add(new GraphEdge(id, r.Id, "mentions", true));
+            edges.Add(new GraphEdge(id, r.Id, "mentions"));
         }
         return edges;
     }

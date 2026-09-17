@@ -23,12 +23,9 @@ public class Revision
     // header
     public string Title { get; set; } = "";
     public string Summary { get; set; } = "";
-    public string Kind { get; set; } = "Feature";
     public string Status { get; set; } = "Current";
     public string AnswersJson { get; set; } = "[]";
-    public string NotCoveredJson { get; set; } = "[]";
     public string RefsJson { get; set; } = "[]";       // [{type,value}]
-    public string LinksJson { get; set; } = "[]";      // [{to,type}] — manual links only
 
     public string Content { get; set; } = "";
     public string ContentHash { get; set; } = "";
@@ -60,16 +57,6 @@ public class DocRef
     public string Value { get; set; } = "";
 
     public Doc Doc { get; set; } = null!;
-}
-
-/// <summary>Materialized manual (author-set) links only — related/depends-on/supersedes/conflicts-with.
-/// part-of and mentions are never stored: they're recomputed at read time from Doc.Domain and Content.</summary>
-public class DocLink
-{
-    public int Id { get; set; }
-    public string FromDocId { get; set; } = "";
-    public string ToDocId { get; set; } = "";
-    public string Type { get; set; } = "";
 }
 
 /// <summary>Tracks what was last written to the export path so a hand-edit there is detected instead of

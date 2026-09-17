@@ -7,10 +7,18 @@ using Waydocs.Api.Data;
 // which project's docs to serve, not where this binary's own static assets live.
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions { Args = args, ContentRootPath = AppContext.BaseDirectory });
 
-// The project this instance serves: `--path <dir>` picks which project's docs to open,
-// defaulting to the current directory. Its SQLite file lives at <path>/.waydocs/docs.db unless Docs:DbPath
-// overrides it explicitly.
-var projectPath = Path.GetFullPath(builder.Configuration["path"] ?? Environment.CurrentDirectory);
+// The project this instance serves: `--path <dir>` picks which project's docs to open, defaulting to the
+// current directory. Parsed directly from argv rather than via builder.Configuration["path"] — ASP.NET
+// Core's config system merges environment variables case-insensitively, so on Windows that key would silently
+// resolve to the OS PATH variable instead of falling through to the current directory whenever --path is
+// omitted (e.g. `dotnet ef` design-time tooling, which doesn't forward argv at all).
+static string? GetArg(string[] argv, string name)
+{
+    for (var i = 0; i < argv.Length; i++)
+        if (argv[i] == name) return i + 1 < argv.Length ? argv[i + 1] : null;
+    return null;
+}
+var projectPath = Path.GetFullPath(GetArg(args, "--path") ?? Environment.CurrentDirectory);
 var usingDefaultDbPath = builder.Configuration["Docs:DbPath"] is null;
 var dbPath = builder.Configuration["Docs:DbPath"]
     ?? Path.Combine(projectPath, ".waydocs", "docs.db");
@@ -84,9 +92,6 @@ api.MapGet("/diff", async (string id, int from, int to, DocService svc) => await
 
 api.MapPut("/doc", async (SaveRequest req, string? author, string? source, DocService svc) =>
     await svc.SaveAsync(req, author ?? "Human", source ?? "web"));
-
-api.MapPost("/link", async (LinkRequest req, string? author, string? source, DocService svc) =>
-    await svc.LinkAsync(req.From, req.To, req.Type, req.Message, author ?? "Human", source ?? "web"));
 
 api.MapPost("/revert", async (string id, RevertRequest req, string? author, string? source, DocService svc) =>
     await svc.RevertAsync(id, req.To, req.Message, author ?? "Human", source ?? "web"));

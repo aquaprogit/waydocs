@@ -1,19 +1,16 @@
 import { useState } from 'react'
 import { api } from './api'
 import Modal from './Modal'
-import { KIND_LABEL, TEMPLATES, slugify } from './docmodel'
+import { DEFAULT_TEMPLATE, DOMAIN_INDEX_TEMPLATE, slugify } from './docmodel'
 import { go } from './router'
-import { DOC_KINDS, type DocHeader, type DocHeaderInput, type DocKind } from './types'
+import type { DocHeader, DocHeaderInput } from './types'
 
-const emptyHeader = (title: string, summary: string, kind: DocKind): DocHeaderInput => ({
+const emptyHeader = (title: string, summary: string): DocHeaderInput => ({
   title,
   summary,
-  kind,
   status: 'Draft',
   answers: [],
-  notCovered: [],
   refs: [],
-  links: [],
 })
 
 export default function NewDocDialog({ headers, onClose }: { headers: DocHeader[]; onClose: () => void }) {
@@ -21,7 +18,6 @@ export default function NewDocDialog({ headers, onClose }: { headers: DocHeader[
   const [domain, setDomain] = useState(domains[0] ?? '__new')
   const [newDomain, setNewDomain] = useState('')
   const [slug, setSlug] = useState('')
-  const [kind, setKind] = useState<DocKind>('Feature')
   const [title, setTitle] = useState('')
   const [summary, setSummary] = useState('')
   const [ticket, setTicket] = useState('')
@@ -39,16 +35,16 @@ export default function NewDocDialog({ headers, onClose }: { headers: DocHeader[
       if (domain === '__new' && !headers.some((h) => h.id === `${dom}/README`))
         await api.save({
           id: `${dom}/README`,
-          header: emptyHeader(newDomain.trim(), `Overview and index of the ${newDomain.trim()} domain.`, 'DomainIndex'),
-          content: TEMPLATES.DomainIndex,
+          header: emptyHeader(newDomain.trim(), `Overview and index of the ${newDomain.trim()} domain.`),
+          content: DOMAIN_INDEX_TEMPLATE,
           message: `Create domain ${dom}`,
           ticket,
           baseRevision: null,
         })
       await api.save({
         id,
-        header: emptyHeader(title, summary, kind),
-        content: TEMPLATES[kind],
+        header: emptyHeader(title, summary),
+        content: DEFAULT_TEMPLATE,
         message: `Create ${id}`,
         ticket,
         baseRevision: null,
@@ -96,16 +92,6 @@ export default function NewDocDialog({ headers, onClose }: { headers: DocHeader[
             <input value={newDomain} onChange={(e) => setNewDomain(e.target.value)} placeholder="basket" />
           </label>
         )}
-        <label className="field">
-          <span>Kind</span>
-          <select value={kind} onChange={(e) => setKind(e.target.value as DocKind)}>
-            {DOC_KINDS.filter((k) => k !== 'DomainIndex').map((k) => (
-              <option key={k} value={k}>
-                {KIND_LABEL[k]}
-              </option>
-            ))}
-          </select>
-        </label>
         <label className="field full">
           <span>
             Title <b className="req">required</b>

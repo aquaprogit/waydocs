@@ -7,7 +7,7 @@ import Markdown from './Markdown'
 import { relTime } from './docmodel'
 import { useAsync } from './hooks'
 import { href } from './router'
-import { Avatar, Breadcrumbs, KindPill, PageState, Skeleton, StatusPill } from './ui'
+import { Avatar, Breadcrumbs, PageState, Skeleton, StatusPill } from './ui'
 
 interface Props {
   id: string
@@ -89,7 +89,6 @@ export default function DocView({ id, ids, rev, tab, saved, version }: Props) {
 
       <h1 className="doc-title">{h.title}</h1>
       <div className="doc-meta">
-        <KindPill kind={h.kind} />
         <StatusPill status={h.status} />
         <span className="meta-item">
           <Avatar author={h.updatedBy} /> r{h.revision} · {relTime(h.updated)}

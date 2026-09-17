@@ -192,12 +192,6 @@
   color: var(--warn);
   border-color: transparent;
 }
-.pill.kind-Feature,
-.pill.kind-DomainIndex {
-  background: var(--accent-soft);
-  color: var(--accent);
-  border-color: transparent;
-}
 .pill.status-draft {
   background: var(--gap-bg);
   color: var(--warn);
@@ -290,18 +284,6 @@ a.chip:hover {
 .chip.link.auto {
   border-style: dashed;
   color: var(--ink-soft);
-}
-.chip.link.lt-related {
-  border-color: #3a6ea5;
-}
-.chip.link.lt-depends-on {
-  border-color: #8a5a9e;
-}
-.chip.link.lt-supersedes {
-  border-color: #c07a3a;
-}
-.chip.link.lt-conflicts-with {
-  border-color: #c0392b;
 }
 .chip-x {
   display: inline-flex;
@@ -410,10 +392,6 @@ kbd.kbd {
 }
 .banner.ok {
   background: var(--ok-soft);
-}
-.banner.warn {
-  background: var(--warn-soft);
-  color: var(--ink);
 }
 .error-box {
   display: flex;
@@ -855,8 +833,7 @@ span.crumb.current {
   gap: 16px;
   margin-bottom: 8px;
 }
-ul.qa,
-ul.nc {
+ul.qa {
   margin: 0;
   padding-left: 18px;
 }
@@ -864,12 +841,6 @@ ul.qa li::marker {
   content: '? ';
   color: var(--accent);
   font-weight: 600;
-}
-ul.nc li {
-  color: var(--ink-soft);
-}
-ul.nc li::marker {
-  content: '↳ ';
 }
 .hc-row {
   margin-top: 12px;
@@ -1463,20 +1434,6 @@ pre.code {
 .ticket-field {
   width: 140px;
 }
-.link-preview {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.link-preview select {
-  padding: 5px 8px;
-  border-radius: 6px;
-  border: 1px solid var(--accent);
-  background: var(--accent-soft);
-  font-weight: 600;
-}
-
 /* ---------------------------------------------------------------- diff */
 .diff {
   border: 1px solid var(--rule);

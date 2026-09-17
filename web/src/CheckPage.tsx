@@ -10,7 +10,6 @@ const KIND_TITLE: Record<CheckKind, string> = {
   'stale-path': 'Stale paths (.cursor/, outside docs)',
   'not-indexed': 'Not linked from any doc',
   'missing-answers': 'Header lists no answers',
-  'deprecated-link': 'Links to deprecated docs',
 }
 
 type Tab = 'problems' | 'gaps' | 'headers'
@@ -98,7 +97,6 @@ export default function CheckPage({ version }: { version: number }) {
                 <th className="num">Summary</th>
                 <th className="num">Answers</th>
                 <th className="num">Refs</th>
-                <th className="num">Links</th>
                 <th />
               </tr>
             </thead>
@@ -112,7 +110,6 @@ export default function CheckPage({ version }: { version: number }) {
                   <td className="num mono">{d.summary.length}</td>
                   <td className="num mono">{d.answers.length || '—'}</td>
                   <td className="num mono">{d.refs.length}</td>
-                  <td className="num mono">{d.links.length}</td>
                   <td>
                     <a className="btn small" href={href('edit', d.id)}>
                       Edit header

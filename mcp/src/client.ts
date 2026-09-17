@@ -89,8 +89,6 @@ export const api = {
 
   save: (request: SaveRequest) =>
     req<SaveResult>(`/doc${qs({ author: 'Claude', source: 'mcp' })}`, { method: 'PUT', body: JSON.stringify(request) }),
-  link: (from: string, to: string, type: string, message: string) =>
-    req<SaveResult>(`/link${qs({ author: 'Claude', source: 'mcp' })}`, { method: 'POST', body: JSON.stringify({ from, to, type, message }) }),
   revert: (id: string, to: number, message: string) =>
     req<SaveResult>(`/revert${qs({ id, author: 'Claude', source: 'mcp' })}`, { method: 'POST', body: JSON.stringify({ to, message }) }),
 }

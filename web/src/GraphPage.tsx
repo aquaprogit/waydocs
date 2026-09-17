@@ -7,9 +7,7 @@ import {
   Position,
   ReactFlow,
   useNodesState,
-  type Connection,
   type Edge,
-  type FinalConnectionState,
   type Node,
   type NodeProps,
   type XYPosition,
@@ -17,11 +15,10 @@ import {
 import '@xyflow/react/dist/style.css'
 import { useEffect, useMemo, useState } from 'react'
 import { api } from './api'
-import Modal from './Modal'
 import { domainColor, isIndex } from './docmodel'
 import { useAsync, usePrefersDark } from './hooks'
 import { go, href } from './router'
-import { LINK_TYPES, MANUAL_LINK_TYPES, type DocHeader, type LinkType, type ManualLinkType } from './types'
+import { LINK_TYPES, type DocHeader, type LinkType } from './types'
 import { PageState } from './ui'
 
 type DocNodeData = { header: DocHeader; color: string; size: number; dim: boolean }
@@ -65,10 +62,6 @@ const nodeTypes = { doc: DocNode, ref: RefNode }
 const EDGE_STYLE: Record<LinkType | 'ref', { color: string; dash?: string; width: number; label: string }> = {
   'part-of': { color: '#a39a83', width: 1.2, label: 'part of domain (auto, domain-colored)' },
   mentions: { color: '#8f887a', width: 1, label: 'mentions (auto, weak)' },
-  related: { color: '#3a6ea5', width: 2, label: 'related' },
-  'depends-on': { color: '#8a5a9e', width: 2, label: 'depends on' },
-  supersedes: { color: '#c07a3a', width: 2, label: 'supersedes' },
-  'conflicts-with': { color: '#c0392b', width: 2.2, label: 'conflicts with' },
   ref: { color: '#2f8a8a', dash: '2 4', width: 1, label: 'shared ref' },
 }
 
@@ -122,7 +115,6 @@ export default function GraphPage({ version, focus }: { version: number; focus?:
   const [selected, setSelected] = useState<string | null>(focus ?? null)
   const [focusMode, setFocusMode] = useState(!!focus)
   const [layoutKey, setLayoutKey] = useState(0)
-  const [pending, setPending] = useState<{ from: string; to: string } | null>(null)
   const [rfNodes, setRfNodes, onNodesChange] = useNodesState<AnyNode>([])
 
   const data = graph.data
@@ -225,7 +217,7 @@ export default function GraphPage({ version, focus }: { version: number; focus?:
     }
 
     const edges: Edge[] = [
-      ...shownEdges.map((e) => edge(`${e.type}:${e.from}->${e.to}`, e.from, e.to, e.type, e.auto ? undefined : e.type)),
+      ...shownEdges.map((e) => edge(`${e.type}:${e.from}->${e.to}`, e.from, e.to, e.type)),
       ...refs.flatMap(([value, xs]) => xs.map((x) => edge(`ref:${x}->${value}`, x, `ref:${value}`, 'ref'))),
     ]
     return { nodes, edges }
@@ -248,17 +240,6 @@ export default function GraphPage({ version, focus }: { version: number; focus?:
     if (n.has(v)) n.delete(v)
     else n.add(v)
     return n
-  }
-
-  const onConnect = (c: Connection) => {
-    if (c.source && c.target && c.source !== c.target && !c.target.startsWith('ref:')) setPending({ from: c.source, to: c.target })
-  }
-
-  const onConnectEnd = (event: MouseEvent | TouchEvent, state: FinalConnectionState) => {
-    if (state.isValid || !state.fromNode) return
-    const pt = 'changedTouches' in event ? event.changedTouches[0] : event
-    const to = document.elementFromPoint(pt.clientX, pt.clientY)?.closest('.react-flow__node')?.getAttribute('data-id')
-    if (to && to !== state.fromNode.id && !to.startsWith('ref:')) setPending({ from: state.fromNode.id, to })
   }
 
   if (graph.error) return <PageState status={graph.status} message={graph.error} />
@@ -318,9 +299,6 @@ export default function GraphPage({ version, focus }: { version: number; focus?:
           onNodeClick={(_, n) => n.type === 'doc' && setSelected(n.id)}
           onNodeDoubleClick={(_, n) => n.type === 'doc' && go('doc', n.id)}
           onPaneClick={() => setSelected(null)}
-          onConnect={onConnect}
-          onConnectEnd={onConnectEnd}
-          connectionRadius={40}
           colorMode={dark ? 'dark' : 'light'}
           fitView
           fitViewOptions={{ padding: 0.12 }}
@@ -332,9 +310,7 @@ export default function GraphPage({ version, focus }: { version: number; focus?:
           <MiniMap pannable zoomable nodeColor={(n) => (n.type === 'doc' ? (n.data as DocNodeData).color : '#2f8a8a')} />
         </ReactFlow>
 
-        <div className="graph-hint">
-          Click a doc to inspect · double-click to open · drag from a doc's right handle onto another doc to create a typed link
-        </div>
+        <div className="graph-hint">Click a doc to inspect · double-click to open</div>
 
         {sel && (
           <aside className="graph-side">
@@ -376,69 +352,8 @@ export default function GraphPage({ version, focus }: { version: number; focus?:
           </aside>
         )}
       </div>
-
-      {pending && data && (
-        <LinkDialog
-          from={data.nodes.find((n) => n.id === pending.from)!}
-          to={data.nodes.find((n) => n.id === pending.to)!}
-          onClose={() => setPending(null)}
-        />
-      )}
     </div>
   )
 }
 
 let lastLayoutKey = 0
-
-function LinkDialog({ from, to, onClose }: { from: DocHeader; to: DocHeader; onClose: () => void }) {
-  const [type, setType] = useState<ManualLinkType>('related')
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
-  const msg = message.trim() || `Link ${from.id} ${type} ${to.id}`
-  const submit = async () => {
-    setBusy(true)
-    try {
-      await api.link(from.id, to.id, type, msg)
-      onClose()
-    } catch (e) {
-      setError((e as Error).message)
-    } finally {
-      setBusy(false)
-    }
-  }
-  return (
-    <Modal
-      title="Create typed link"
-      onClose={onClose}
-      footer={
-        <>
-          <span className="muted small">Saved as a new revision of “{from.title}”</span>
-          <span className="spacer" />
-          <button className="btn" onClick={onClose}>
-            Cancel
-          </button>
-          <button className="btn primary" disabled={busy} onClick={submit}>
-            Create link
-          </button>
-        </>
-      }
-    >
-      <div className="link-preview">
-        <span className="chip">{from.title}</span>
-        <select value={type} onChange={(e) => setType(e.target.value as ManualLinkType)} autoFocus>
-          {MANUAL_LINK_TYPES.map((t) => (
-            <option key={t}>{t}</option>
-          ))}
-        </select>
-        <span className="chip">{to.title}</span>
-      </div>
-      {type === 'supersedes' && <p className="banner warn">“{to.title}” will be marked Deprecated.</p>}
-      <label className="field full">
-        <span>Change message</span>
-        <input value={message} onChange={(e) => setMessage(e.target.value)} placeholder={msg} />
-      </label>
-      {error && <div className="error-box">{error}</div>}
-    </Modal>
-  )
-}

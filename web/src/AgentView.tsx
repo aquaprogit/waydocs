@@ -19,7 +19,7 @@ export default function AgentView({ header, content }: { header: DocHeader; cont
       <div className="av-step">
         <span className="av-n">0</span>
         <div className="av-text">
-          <b className="mono">docs_map()</b> — this doc's row among all docs (id, title, summary, kind, status, tokens)
+          <b className="mono">docs_map()</b> — this doc's row among all docs (id, title, summary, status, tokens)
         </div>
         <span className="av-tok mono">{header.mapTokens} tok</span>
       </div>

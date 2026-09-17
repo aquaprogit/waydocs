@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
-import { KIND_LABEL, domainColor } from './docmodel'
+import { domainColor } from './docmodel'
 import { href } from './router'
-import type { Author, DocKind, DocStatus, Source } from './types'
+import type { Author, DocStatus, Source } from './types'
 
 const humanize = (seg: string) => seg.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 
@@ -58,10 +58,6 @@ export function Highlight({ text, q }: { text: string; q: string }) {
   if (!terms.length) return <>{text}</>
   const re = new RegExp(`(${terms.map(esc).join('|')})`, 'gi')
   return <>{text.split(re).map((p, i) => (i % 2 ? <mark key={i}>{p}</mark> : p))}</>
-}
-
-export function KindPill({ kind }: { kind: DocKind }) {
-  return <span className={`pill kind-${kind}`}>{KIND_LABEL[kind]}</span>
 }
 
 export function StatusPill({ status }: { status: DocStatus }) {

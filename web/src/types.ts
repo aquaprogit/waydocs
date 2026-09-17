@@ -1,15 +1,10 @@
-export const DOC_KINDS = ['DomainIndex', 'Feature', 'Reference', 'QaLog', 'Backlog', 'Plan'] as const
-export type DocKind = (typeof DOC_KINDS)[number]
-
 export const DOC_STATUSES = ['Current', 'Draft', 'Deprecated'] as const
 export type DocStatus = (typeof DOC_STATUSES)[number]
 
 // Ref entity kinds are project-defined (e.g. "ticket", "service", "endpoint") — not a fixed enum.
 export type RefType = string
 
-export const MANUAL_LINK_TYPES = ['depends-on', 'related', 'supersedes', 'conflicts-with'] as const
-export type ManualLinkType = (typeof MANUAL_LINK_TYPES)[number]
-export const LINK_TYPES = ['part-of', 'mentions', ...MANUAL_LINK_TYPES] as const
+export const LINK_TYPES = ['part-of', 'mentions'] as const
 export type LinkType = (typeof LINK_TYPES)[number]
 
 export interface DocRef {
@@ -17,20 +12,12 @@ export interface DocRef {
   value: string
 }
 
-export interface DocLink {
-  to: string
-  type: ManualLinkType
-}
-
 export interface DocHeaderInput {
   title: string
   summary: string
-  kind: DocKind
   status: DocStatus
   answers: string[]
-  notCovered: string[]
   refs: DocRef[]
-  links: DocLink[]
 }
 
 export interface SectionInfo {
@@ -107,7 +94,6 @@ export interface GraphEdge {
   from: string
   to: string
   type: LinkType
-  auto: boolean
 }
 
 export interface GraphData {
@@ -153,7 +139,7 @@ export interface GapItem {
   text: string
 }
 
-export type CheckKind = 'broken-link' | 'stale-path' | 'not-indexed' | 'missing-answers' | 'summary' | 'deprecated-link'
+export type CheckKind = 'broken-link' | 'stale-path' | 'not-indexed' | 'missing-answers' | 'summary'
 
 export interface CheckIssue {
   docId: string

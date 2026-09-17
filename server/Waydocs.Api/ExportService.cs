@@ -50,7 +50,7 @@ public class ExportService(AppDbContext db, IConfiguration config, ILogger<Expor
     private static string BuildFrontmatter(string id, Revision r)
     {
         var refs = JsonSerializer.Deserialize<List<DocRefDto>>(r.RefsJson, JsonOpts) ?? [];
-        var lines = new List<string> { "---", $"id: {id}", $"kind: {r.Kind}", $"status: {r.Status}", $"revision: {r.Number}", $"updated: {r.CreatedUtc}" };
+        var lines = new List<string> { "---", $"id: {id}", $"status: {r.Status}", $"revision: {r.Number}", $"updated: {r.CreatedUtc}" };
         foreach (var g in refs.GroupBy(x => x.Type))
             lines.Add($"{g.Key}s: [{string.Join(", ", g.Select(x => x.Value))}]");
         lines.Add("---");
