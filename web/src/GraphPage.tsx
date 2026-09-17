@@ -22,13 +22,14 @@ import { domainColor, isIndex } from './docmodel'
 import { useAsync, usePrefersDark } from './hooks'
 import { go, href } from './router'
 import { LINK_TYPES, MANUAL_LINK_TYPES, type DocHeader, type LinkType, type ManualLinkType } from './types'
+import { PageState } from './ui'
 
 type DocNodeData = { header: DocHeader; color: string; size: number; dim: boolean }
 type RefNodeData = { label: string; refType: string; count: number; dim: boolean }
 type DocNodeT = Node<DocNodeData, 'doc'>
 type RefNodeT = Node<RefNodeData, 'ref'>
 type AnyNode = DocNodeT | RefNodeT
-type RefMode = 'off' | 'service' | 'ticket' | 'endpoint' | 'dbObject'
+type RefMode = 'off' | string
 
 /** An Obsidian-style dot: bigger + colored for a domain hub, small (same hue) for a member doc. Label sits below,
  *  out of normal flow, so react-flow's handles still attach right at the circle's edge. */
@@ -74,9 +75,9 @@ const EDGE_STYLE: Record<LinkType | 'ref', { color: string; dash?: string; width
 const ROOT_SIZE = 46
 const HUB_SIZE = 30
 const DOC_SIZE = 13
-const HUB_R = 260
-const DOC_R = 110
-const DOC_ARC_DEG = 130
+const HUB_R = 320
+const DOC_R = 150
+const DOC_ARC_DEG = 150
 
 function nodeSize(h: DocHeader) {
   if (h.id === 'README') return ROOT_SIZE
@@ -101,10 +102,12 @@ function radialLayout(nodes: DocHeader[]) {
     pos[hubId] = { x: hx, y: hy }
     const docs = (byDomain.get(d) ?? []).filter((n) => n.id !== hubId)
     const arc = (DOC_ARC_DEG * Math.PI) / 180
+    // Crowded domains (Mammut, Order, …) get pushed out further so their doc labels don't stack on the hub.
+    const r = DOC_R + Math.max(0, docs.length - 5) * 22
     docs.forEach((doc, j) => {
       const t = docs.length > 1 ? j / (docs.length - 1) - 0.5 : 0
       const da = angle + t * arc
-      pos[doc.id] = { x: hx + Math.cos(da) * DOC_R, y: hy + Math.sin(da) * DOC_R }
+      pos[doc.id] = { x: hx + Math.cos(da) * r, y: hy + Math.sin(da) * r }
     })
   })
   return { pos, refX: HUB_R + DOC_R + 140 }
@@ -125,6 +128,7 @@ export default function GraphPage({ version, focus }: { version: number; focus?:
   const data = graph.data
   const layout = useMemo(() => (data ? radialLayout(data.nodes) : { pos: {}, refX: 0 }), [data])
   const domains = useMemo(() => (data ? [...new Set(data.nodes.map((n) => n.domain))] : []), [data])
+  const refTypes = useMemo(() => (data ? [...new Set(data.nodes.flatMap((n) => n.refs.map((r) => r.type)))].sort() : []), [data])
 
   const computed = useMemo(() => {
     if (!data) return { nodes: [] as AnyNode[], edges: [] as Edge[] }
@@ -212,7 +216,9 @@ export default function GraphPage({ version, focus }: { version: number; focus?:
         label,
         style: { stroke: color, strokeWidth: width, strokeDasharray: dash, opacity: dim ? 0.06 : opacity },
         labelStyle: { fontSize: 10, fill: color, fontWeight: 600 },
-        labelBgStyle: { fill: dark ? '#201e1a' : '#fbf9f5' },
+        labelBgStyle: { fill: dark ? '#201e1a' : '#fbf9f5', opacity: 0.92 },
+        labelBgPadding: [4, 2],
+        labelBgBorderRadius: 3,
         markerEnd: arrow ? { type: MarkerType.ArrowClosed, color, width: 12, height: 12 } : undefined,
         zIndex: dim ? 0 : 1,
       }
@@ -255,12 +261,7 @@ export default function GraphPage({ version, focus }: { version: number; focus?:
     if (to && to !== state.fromNode.id && !to.startsWith('ref:')) setPending({ from: state.fromNode.id, to })
   }
 
-  if (graph.error)
-    return (
-      <div className="page">
-        <div className="error-box">{graph.error}</div>
-      </div>
-    )
+  if (graph.error) return <PageState status={graph.status} message={graph.error} />
 
   return (
     <div className="graph-page">
@@ -293,10 +294,11 @@ export default function GraphPage({ version, focus }: { version: number; focus?:
           </label>
           <select id="refmode" value={refMode} onChange={(e) => setRefMode(e.target.value as RefMode)}>
             <option value="off">off</option>
-            <option value="service">services</option>
-            <option value="ticket">tickets</option>
-            <option value="endpoint">endpoints</option>
-            <option value="dbObject">DB objects</option>
+            {refTypes.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
           </select>
           <label className="check-inline">
             <input type="checkbox" checked={focusMode} onChange={(e) => setFocusMode(e.target.checked)} /> focus selection

@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace SdDocs.Api.Migrations
+namespace Waydocs.Api.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration

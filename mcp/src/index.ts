@@ -4,7 +4,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { registerTools } from './tools.js'
 
 const server = new McpServer({
-  name: 'sd-docs',
+  name: 'waydocs',
   version: '0.1.0',
 })
 

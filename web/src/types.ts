@@ -4,8 +4,8 @@ export type DocKind = (typeof DOC_KINDS)[number]
 export const DOC_STATUSES = ['Current', 'Draft', 'Deprecated'] as const
 export type DocStatus = (typeof DOC_STATUSES)[number]
 
-export const REF_TYPES = ['ticket', 'service', 'endpoint', 'dbObject', 'd365Entity'] as const
-export type RefType = (typeof REF_TYPES)[number]
+// Ref entity kinds are project-defined (e.g. "ticket", "service", "endpoint") — not a fixed enum.
+export type RefType = string
 
 export const MANUAL_LINK_TYPES = ['depends-on', 'related', 'supersedes', 'conflicts-with'] as const
 export type ManualLinkType = (typeof MANUAL_LINK_TYPES)[number]
@@ -40,7 +40,8 @@ export interface SectionInfo {
   tokens: number
 }
 
-export type Author = 'Claude' | 'Vladyslav'
+// 'Claude' marks agent-authored revisions; any other string is a human author's name.
+export type Author = string
 export type Source = 'mcp' | 'web' | 'import'
 
 export interface DocHeader extends DocHeaderInput {

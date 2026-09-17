@@ -4,7 +4,6 @@ import {
   DOC_KINDS,
   DOC_STATUSES,
   MANUAL_LINK_TYPES,
-  REF_TYPES,
   type DocHeader,
   type DocHeaderInput,
   type DocLink,
@@ -66,7 +65,7 @@ export default function HeaderForm({ value: v, onChange, docId, headers, known }
         hint="questions this doc answers (max 8)"
         items={v.answers}
         max={8}
-        placeholder="When is DiscountReference sent to D365?"
+        placeholder="What triggers a refund on a cancelled order?"
         onChange={(a) => set('answers', a)}
       />
       <ListEditor
@@ -119,18 +118,20 @@ function ListEditor(props: {
 }
 
 function RefsEditor({ refs, known, onChange }: { refs: DocRef[]; known?: Record<RefType, string[]>; onChange: (r: DocRef[]) => void }) {
-  const [type, setType] = useState<RefType>('service')
+  const knownTypes = Object.keys(known ?? {})
+  const [type, setType] = useState<RefType>(knownTypes[0] ?? 'ticket')
   const [val, setVal] = useState('')
   const add = () => {
     const value = val.trim().replace(/^#/, '')
-    if (!value) return
-    if (!refs.some((r) => r.type === type && r.value === value)) onChange([...refs, { type, value }])
+    const t = type.trim()
+    if (!value || !t) return
+    if (!refs.some((r) => r.type === t && r.value === value)) onChange([...refs, { type: t, value }])
     setVal('')
   }
   return (
     <div className="field full">
       <span className="flabel">
-        Refs <small className="hint">tickets, services, endpoints, DB / D365 objects — shared graph nodes</small>
+        Refs <small className="hint">shared entities (tickets, services, endpoints, or any project-defined kind) — shared graph nodes</small>
       </span>
       <div className="chips">
         {refs.map((r) => (
@@ -145,17 +146,24 @@ function RefsEditor({ refs, known, onChange }: { refs: DocRef[]; known?: Record<
         {!refs.length && <span className="muted small">No refs</span>}
       </div>
       <div className="add-row">
-        <select value={type} onChange={(e) => setType(e.target.value as RefType)}>
-          {REF_TYPES.map((t) => (
-            <option key={t}>{t}</option>
+        <input
+          list="known-ref-types"
+          className="ref-type-input"
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+          placeholder="type"
+        />
+        <datalist id="known-ref-types">
+          {knownTypes.map((t) => (
+            <option key={t} value={t} />
           ))}
-        </select>
+        </datalist>
         <input
           list="known-refs"
           value={val}
           onChange={(e) => setVal(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), add())}
-          placeholder={type === 'ticket' ? '4936' : type === 'endpoint' ? 'GET /api/…' : 'Name'}
+          placeholder="Name"
         />
         <datalist id="known-refs">
           {(known?.[type] ?? []).map((x) => (

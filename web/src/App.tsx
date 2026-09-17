@@ -13,6 +13,7 @@ import SearchBox from './SearchBox'
 import Sidebar from './Sidebar'
 import { useAsync, useDocsVersion } from './hooks'
 import { go, href, useRoute, type Page } from './router'
+import { PageState } from './ui'
 import './App.css'
 
 const NAV: [Page, string][] = [
@@ -41,12 +42,7 @@ export default function App() {
   const section: Page = route.page === 'edit' || route.page === 'history' || route.page === 'home' ? 'doc' : route.page
 
   let page: ReactNode = null
-  if (list.error)
-    page = (
-      <div className="page">
-        <div className="error-box">{list.error}</div>
-      </div>
-    )
+  if (list.error) page = <PageState status={list.status} message={list.error} />
   else if (route.page === 'doc' && route.id)
     page = (
       <DocView
@@ -72,7 +68,7 @@ export default function App() {
       <header className="topbar">
         <a className="brand" href={href('doc', 'README')}>
           <span className="brand-mark">§</span>
-          <span>SD Docs</span>
+          <span>Waydocs</span>
         </a>
         <nav className="nav">
           {NAV.map(([p, label]) => (

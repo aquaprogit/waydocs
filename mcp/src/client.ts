@@ -11,7 +11,7 @@ import type {
   SaveResult,
 } from './types.js'
 
-const BASE = (process.env.SD_DOCS_API_URL || 'http://localhost:5180').replace(/\/+$/, '')
+const BASE = (process.env.WAYDOCS_API_URL || 'http://localhost:5180').replace(/\/+$/, '')
 
 export class ApiError extends Error {
   constructor(
@@ -30,8 +30,8 @@ async function call(path: string, init?: RequestInit): Promise<Response> {
     })
   } catch (e) {
     throw new ApiError(
-      `Cannot reach the SD Docs API at ${BASE}. Start it with ` +
-        '`dotnet run` in server/SdDocs.Api (or set SD_DOCS_API_URL). ' +
+      `Cannot reach the Waydocs API at ${BASE}. Start it with ` +
+        '`dotnet run` in server/Waydocs.Api (or set WAYDOCS_API_URL). ' +
         `Underlying error: ${(e as Error).message}`,
     )
   }

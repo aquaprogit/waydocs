@@ -47,7 +47,7 @@ export default function MockMenu({ docId }: { docId?: string }) {
             {USE_MOCK ? (
               <>
                 No backend running — data lives in this browser (localStorage), seeded from
-                <span className="mono"> {source.data || 'SD-Backend/docs'}</span>.
+                <span className="mono"> {source.data || 'the configured source docs folder'}</span>.
               </>
             ) : (
               <>
@@ -96,7 +96,7 @@ export default function MockMenu({ docId }: { docId?: string }) {
             </>
           }
         >
-          <p>All edits, revisions and links made in this browser will be discarded. The seed from SD-Backend/docs is reloaded.</p>
+          <p>All edits, revisions and links made in this browser will be discarded. The seed from the source docs folder is reloaded.</p>
         </Modal>
       )}
     </div>

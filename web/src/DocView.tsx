@@ -7,7 +7,7 @@ import Markdown from './Markdown'
 import { relTime } from './docmodel'
 import { useAsync } from './hooks'
 import { href } from './router'
-import { Avatar, KindPill, Skeleton, StatusPill } from './ui'
+import { Avatar, Breadcrumbs, KindPill, PageState, Skeleton, StatusPill } from './ui'
 
 interface Props {
   id: string
@@ -23,12 +23,22 @@ export default function DocView({ id, ids, rev, tab, saved, version }: Props) {
   const links = useAsync(() => api.links(id), [id, version])
   const [dismissed, setDismissed] = useState(false)
 
-  if (doc.error)
+  if (doc.error) {
+    const fallback = [...ids][0]
     return (
-      <div className="page">
-        <div className="error-box">{doc.error}</div>
-      </div>
+      <PageState
+        status={doc.status}
+        message={doc.status === 404 ? `There's no doc at “${id}”. It may have been renamed or removed.` : doc.error}
+        action={
+          fallback && (
+            <a className="btn" href={href('doc', fallback)}>
+              Browse docs
+            </a>
+          )
+        }
+      />
     )
+  }
   if (!doc.data) return <Skeleton />
 
   const { header: h, content } = doc.data
@@ -38,9 +48,7 @@ export default function DocView({ id, ids, rev, tab, saved, version }: Props) {
   return (
     <div className="page doc-page">
       <div className="doc-top">
-        <div className="crumbs mono">
-          {h.domain} / {h.id}
-        </div>
+        <Breadcrumbs id={h.id} title={h.title} ids={ids} />
         <div className="doc-actions">
           <div className="seg">
             <a href={href('doc', id, { rev })} className={!agent ? 'on' : ''}>

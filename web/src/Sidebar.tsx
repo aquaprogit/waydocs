@@ -9,8 +9,7 @@ function depth(id: string) {
 }
 
 function label(h: DocHeader) {
-  const segs = h.id.split('/')
-  return segs.length === 2 && segs[1] === 'README' ? 'Overview' : displayName(h)
+  return displayName(h)
 }
 
 export default function Sidebar({ headers, activeId }: { headers: DocHeader[]; activeId?: string }) {
@@ -44,22 +43,40 @@ export default function Sidebar({ headers, activeId }: { headers: DocHeader[]; a
       </a>
       {groups.map((g) => {
         const open = !!filter || !collapsed.has(g.domain)
+        const overview = g.items.find((h) => h.id === `${g.domain}/README`)
+        const children = overview ? g.items.filter((h) => h.id !== overview.id) : g.items
         return (
           <div key={g.domain} className="side-group">
-            <button className="side-domain" onClick={() => toggle(g.domain)} aria-expanded={open}>
-              <span className="caret">{open ? '▾' : '▸'}</span>
-              <span className="dot" style={{ background: domainColor(g.domain) }} />
-              <span className="dname">{g.domain}</span>
+            <div className="side-domain">
+              <button
+                className="side-caret"
+                onClick={() => toggle(g.domain)}
+                aria-expanded={open}
+                aria-label={open ? `Collapse ${g.domain}` : `Expand ${g.domain}`}
+              >
+                <span className={`caret ${open ? 'open' : ''}`}>›</span>
+              </button>
+              {overview ? (
+                <a href={href('doc', overview.id)} className={`side-domain-link ${overview.id === activeId ? 'on' : ''}`} title={overview.summary}>
+                  <span className="dot" style={{ background: domainColor(g.domain) }} />
+                  <span className="dname">{g.domain}</span>
+                </a>
+              ) : (
+                <button className="side-domain-link" onClick={() => toggle(g.domain)}>
+                  <span className="dot" style={{ background: domainColor(g.domain) }} />
+                  <span className="dname">{g.domain}</span>
+                </button>
+              )}
               <span className="count mono">{g.items.length}</span>
-            </button>
+            </div>
             {open && (
               <ul>
-                {g.items.map((h) => (
+                {children.map((h) => (
                   <li key={h.id}>
                     <a
                       href={href('doc', h.id)}
                       className={`side-item ${h.id === activeId ? 'on' : ''} ${h.status === 'Deprecated' ? 'deprecated' : ''}`}
-                      style={{ paddingLeft: 30 + depth(h.id) * 14 }}
+                      style={{ paddingLeft: 8 + depth(h.id) * 14 }}
                       title={h.summary}
                     >
                       <span className="si-title">{label(h)}</span>

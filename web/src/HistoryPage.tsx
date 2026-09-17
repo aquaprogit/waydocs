@@ -5,7 +5,7 @@ import Modal from './Modal'
 import { relTime } from './docmodel'
 import { useAsync } from './hooks'
 import { href } from './router'
-import { Avatar, Skeleton, SourceTag, TicketChip } from './ui'
+import { Avatar, Breadcrumbs, PageState, Skeleton, SourceTag, TicketChip } from './ui'
 
 export default function HistoryPage({ id, version }: { id: string; version: number }) {
   const hist = useAsync(() => api.history(id), [id, version])
@@ -21,16 +21,22 @@ export default function HistoryPage({ id, version }: { id: string; version: numb
 
   if (hist.error)
     return (
-      <div className="page">
-        <div className="error-box">{hist.error}</div>
-      </div>
+      <PageState
+        status={hist.status}
+        message={hist.status === 404 ? `There's no doc at “${id}”.` : hist.error}
+        action={
+          <a className="btn" href={href('doc', id)}>
+            Back to doc
+          </a>
+        }
+      />
     )
   if (!hist.data) return <Skeleton />
 
   return (
     <div className="page history-page">
       <div className="doc-top">
-        <div className="crumbs mono">{id}</div>
+        <Breadcrumbs id={id} title={items[0]?.title ?? id} />
         <div className="doc-actions">
           <a className="btn" href={href('doc', id)}>
             ← Back to doc

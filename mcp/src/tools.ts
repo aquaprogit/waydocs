@@ -4,7 +4,6 @@ import { ApiError, api } from './client.js'
 import { agentHeader, mapEntry } from './shape.js'
 import type { DocHeaderInput } from './types.js'
 
-const REF_TYPES = ['ticket', 'service', 'endpoint', 'dbObject', 'd365Entity'] as const
 const LINK_TYPES = ['depends-on', 'related', 'supersedes', 'conflicts-with'] as const
 const KINDS = ['DomainIndex', 'Feature', 'Reference', 'QaLog', 'Backlog', 'Plan'] as const
 const STATUSES = ['Current', 'Draft', 'Deprecated'] as const
@@ -16,7 +15,12 @@ const headerSchema = z.object({
   status: z.enum(STATUSES),
   answers: z.array(z.string()).max(8).describe('questions this doc answers'),
   notCovered: z.array(z.string()).describe('nearby topics that live in another doc'),
-  refs: z.array(z.object({ type: z.enum(REF_TYPES), value: z.string() })),
+  refs: z.array(
+    z.object({
+      type: z.string().describe('entity kind this ref points at — project-defined, e.g. "ticket", "service", "endpoint"'),
+      value: z.string(),
+    }),
+  ),
   links: z.array(z.object({ to: z.string(), type: z.enum(LINK_TYPES) })),
 })
 
@@ -64,9 +68,9 @@ export function registerTools(server: McpServer) {
   server.registerTool(
     'find_docs',
     {
-      title: 'Find docs referencing a ticket, service, endpoint or DB/D365 object',
+      title: 'Find docs referencing a ref entity (ticket, service, endpoint, or any project-defined type)',
       description: 'Exact-match lookup over the refs every doc lists in its header — start here for "docs about ticket #4936" or "docs touching OrderSubmittingHandler".',
-      inputSchema: { type: z.enum(REF_TYPES), value: z.string() },
+      inputSchema: { type: z.string(), value: z.string() },
     },
     async ({ type, value }) => guarded(async () => (await api.find(type, value)).map(mapEntry)),
   )

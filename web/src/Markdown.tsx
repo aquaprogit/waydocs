@@ -57,6 +57,8 @@ export default function Markdown({ content, docId, ids }: { content: string; doc
       blockquote: ({ node, children }) => (
         <blockquote className={textOf(node as unknown as HastLike).includes('[DOC GAP]') ? 'gap' : undefined}>{children}</blockquote>
       ),
+      strong: ({ node, children }) =>
+        textOf(node as unknown as HastLike).trim() === '[DOC GAP]' ? <span className="gap-mark">⚠ Doc gap</span> : <strong>{children}</strong>,
       h2: ({ node, children }) => <h2 id={slugify(textOf(node as unknown as HastLike))}>{children}</h2>,
       h3: ({ node, children }) => <h3 id={slugify(textOf(node as unknown as HastLike))}>{children}</h3>,
       table: ({ children }) => (

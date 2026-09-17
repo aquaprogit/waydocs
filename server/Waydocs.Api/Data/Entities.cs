@@ -1,4 +1,4 @@
-namespace SdDocs.Api.Data;
+namespace Waydocs.Api.Data;
 
 public class Doc
 {
@@ -42,7 +42,7 @@ public class Revision
 
     public string Message { get; set; } = "";
     public string? Ticket { get; set; }
-    public string Author { get; set; } = "Vladyslav"; // Claude | Vladyslav
+    public string Author { get; set; } = "Human"; // "Claude" for agent-authored revisions, or any human author's name
     public string Source { get; set; } = "web";       // mcp | web | import
     public string? BackendCommit { get; set; }
     public string CreatedUtc { get; set; } = "";
@@ -72,7 +72,7 @@ public class DocLink
     public string Type { get; set; } = "";
 }
 
-/// <summary>Tracks what was last written to SD-Backend/docs so a hand-edit there is detected instead of
+/// <summary>Tracks what was last written to the export path so a hand-edit there is detected instead of
 /// silently overwritten on the next export.</summary>
 public class ExportState
 {

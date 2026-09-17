@@ -7,7 +7,7 @@ import { pickInput, serializeForDiff } from './docmodel'
 import { useAsync } from './hooks'
 import { go, href } from './router'
 import { ApiError, type DocFull, type DocHeader, type DocHeaderInput } from './types'
-import { Skeleton } from './ui'
+import { Breadcrumbs, Skeleton } from './ui'
 
 export default function EditPage({ id, headers }: { id: string; headers: DocHeader[] }) {
   const [loaded, setLoaded] = useState<DocFull | null>(null)
@@ -75,7 +75,7 @@ export default function EditPage({ id, headers }: { id: string; headers: DocHead
     <div className="page edit-page">
       <div className="edit-bar">
         <div className="eb-left">
-          <span className="crumbs mono">{id}</span>
+          <Breadcrumbs id={id} title={loaded.header.title} ids={ids} />
           <b>Editing</b>
           <span className="muted small">based on r{base}</span>
           {dirty && <span className="pill warn">unsaved changes</span>}

@@ -5,7 +5,7 @@ import type { DocHeader, SearchHit } from './types'
 import { Highlight } from './ui'
 
 export default function AgentMapPage({ headers }: { headers: DocHeader[] }) {
-  const [q, setQ] = useState('When is DiscountReference sent to D365?')
+  const [q, setQ] = useState('What triggers a refund on a cancelled order?')
   const [hits, setHits] = useState<SearchHit[]>([])
 
   useEffect(() => {

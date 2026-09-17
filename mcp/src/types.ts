@@ -1,5 +1,5 @@
 export interface DocRef {
-  type: 'ticket' | 'service' | 'endpoint' | 'dbObject' | 'd365Entity'
+  type: string
   value: string
 }
 
@@ -29,7 +29,7 @@ export interface DocHeader {
   revision: number
   currentRevision: number
   updated: string
-  updatedBy: 'Claude' | 'Vladyslav'
+  updatedBy: string
   tokens: number
   headerTokens: number
   mapTokens: number

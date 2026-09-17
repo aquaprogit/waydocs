@@ -31,7 +31,7 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
     res = await fetch(`/api${path}`, { ...init, headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) } })
   } catch (e) {
     throw new ApiError(
-      `Cannot reach the SD Docs API. Start it with \`dotnet run\` in server/SdDocs.Api (port 5180). Underlying error: ${(e as Error).message}`,
+      `Cannot reach the Waydocs API. Start it with \`dotnet run\` in server/Waydocs.Api (port 5180). Underlying error: ${(e as Error).message}`,
       0,
     )
   }
@@ -91,13 +91,13 @@ export const httpApi = {
 
   diff: (id: string, from: number, to: number) => req<{ before: string; after: string }>(`/diff${qs({ id, from, to })}`),
 
-  async save(request: SaveRequest, author: Author = 'Vladyslav', source: Source = 'web'): Promise<SaveResult> {
+  async save(request: SaveRequest, author: Author = 'Human', source: Source = 'web'): Promise<SaveResult> {
     const r = await req<SaveResult>(`/doc${qs({ author, source })}`, { method: 'PUT', body: JSON.stringify(request) })
     if (r.changed) bump()
     return r
   },
 
-  async link(from: string, to: string, type: ManualLinkType, message: string, author: Author = 'Vladyslav', source: Source = 'web'): Promise<SaveResult> {
+  async link(from: string, to: string, type: ManualLinkType, message: string, author: Author = 'Human', source: Source = 'web'): Promise<SaveResult> {
     const r = await req<SaveResult>(`/link${qs({ author, source })}`, {
       method: 'POST',
       body: JSON.stringify({ from, to, type, message }),
@@ -106,7 +106,7 @@ export const httpApi = {
     return r
   },
 
-  async revert(id: string, to: number, message: string, author: Author = 'Vladyslav', source: Source = 'web'): Promise<SaveResult> {
+  async revert(id: string, to: number, message: string, author: Author = 'Human', source: Source = 'web'): Promise<SaveResult> {
     const r = await req<SaveResult>(`/revert${qs({ id, author, source })}`, {
       method: 'POST',
       body: JSON.stringify({ to, message }),

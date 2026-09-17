@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace SdDocs.Api.Data;
+namespace Waydocs.Api.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {

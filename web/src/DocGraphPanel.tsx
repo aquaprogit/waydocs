@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { href } from './router'
 import type { DocHeader, DocLinks, DocRef, LinkType } from './types'
 
-const REF_ICON: Record<string, string> = { ticket: '#', service: 'svc', endpoint: 'api', dbObject: 'db', d365Entity: 'd365' }
+// Short labels for a few common ref kinds; any other project-defined type falls back to its own name.
+const REF_ICON: Record<string, string> = { ticket: '#', service: 'svc', endpoint: 'api' }
 
 const INCOMING: Record<LinkType, string> = {
   'part-of': 'contains',
@@ -40,7 +41,7 @@ export default function DocGraphPanel({ header: h, links }: { header: DocHeader;
                     onClick={() => s && setOpenRef(openRef === key ? null : key)}
                     title={s ? `Also in ${s.docs.length} other doc(s) — click to see` : 'Only this doc'}
                   >
-                    <span className="ref-t">{REF_ICON[r.type]}</span>
+                    <span className="ref-t">{REF_ICON[r.type] ?? r.type}</span>
                     {r.value}
                     {s && <span className="ref-n">+{s.docs.length}</span>}
                   </button>

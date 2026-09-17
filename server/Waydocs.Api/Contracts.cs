@@ -1,4 +1,4 @@
-namespace SdDocs.Api;
+namespace Waydocs.Api;
 
 // Mirrors web/src/types.ts exactly (camelCase is the ASP.NET Core minimal-API JSON default) so the web app's
 // httpApi.ts is a thin fetch wrapper with no reshaping.

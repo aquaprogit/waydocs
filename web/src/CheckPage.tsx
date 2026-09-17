@@ -34,7 +34,7 @@ export default function CheckPage({ version }: { version: number }) {
       <h1 className="doc-title">Check</h1>
       <p className="muted">
         What <span className="mono">check_docs</span> will report. The server adds staleness: docs whose referenced services
-        changed in SD-Backend since the doc was last verified.
+        changed in the source repo since the doc was last verified.
       </p>
       <div className="tiles">
         <button className={`tile ${tab === 'problems' ? 'on' : ''}`} onClick={() => setTab('problems')}>

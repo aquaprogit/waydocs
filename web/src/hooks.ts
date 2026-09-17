@@ -1,5 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { api } from './api'
+import { ApiError } from './types'
 
 export function useDocsVersion() {
   return useSyncExternalStore(api.subscribe, api.version)
@@ -8,6 +9,7 @@ export function useDocsVersion() {
 export interface AsyncState<T> {
   data?: T
   error?: string
+  status?: number
   loading: boolean
 }
 
@@ -17,7 +19,7 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]): AsyncState<T
     let alive = true
     fn().then(
       (data) => alive && setState({ data, loading: false }),
-      (e: Error) => alive && setState({ error: e.message, loading: false }),
+      (e: Error) => alive && setState({ error: e.message, status: e instanceof ApiError ? e.status : undefined, loading: false }),
     )
     return () => {
       alive = false

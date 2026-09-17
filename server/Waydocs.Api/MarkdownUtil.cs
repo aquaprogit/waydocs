@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace SdDocs.Api;
+namespace Waydocs.Api;
 
 /// <summary>
 /// Port of web/src/docmodel.ts's pure markdown helpers, kept in the API so save-time computation (sections,

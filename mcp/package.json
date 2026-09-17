@@ -1,10 +1,10 @@
 {
-  "name": "@sd-docs/mcp",
+  "name": "@waydocs/mcp",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "bin": {
-    "sd-docs-mcp": "dist/index.js"
+    "waydocs-mcp": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",

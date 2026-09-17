@@ -1,13 +1,13 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using SdDocs.Api.Data;
+using Waydocs.Api.Data;
 
-namespace SdDocs.Api;
+namespace Waydocs.Api;
 
 /// <summary>
-/// Mirrors each doc's current revision to a markdown file under SD-Backend/docs (Docs:ExportPath), with a
-/// YAML frontmatter header, so existing skills/CLAUDE.md paths that `Read` those files keep working. Refuses
-/// to overwrite a file that was hand-edited since the last export — check_docs reports the drift instead.
+/// Mirrors each doc's current revision to a markdown file under the configured export path (Docs:ExportPath),
+/// with a YAML frontmatter header, so existing skills/CLAUDE.md paths that `Read` those files keep working.
+/// Refuses to overwrite a file that was hand-edited since the last export — check_docs reports the drift instead.
 /// </summary>
 public class ExportService(AppDbContext db, IConfiguration config, ILogger<ExportService> logger)
 {

@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using SdDocs.Api;
-using SdDocs.Api.Data;
+using Waydocs.Api;
+using Waydocs.Api.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -63,13 +63,13 @@ api.MapGet("/history", async (string id, DocService svc) => await svc.HistoryAsy
 api.MapGet("/diff", async (string id, int from, int to, DocService svc) => await svc.DiffAsync(id, from, to));
 
 api.MapPut("/doc", async (SaveRequest req, string? author, string? source, DocService svc) =>
-    await svc.SaveAsync(req, author ?? "Vladyslav", source ?? "web"));
+    await svc.SaveAsync(req, author ?? "Human", source ?? "web"));
 
 api.MapPost("/link", async (LinkRequest req, string? author, string? source, DocService svc) =>
-    await svc.LinkAsync(req.From, req.To, req.Type, req.Message, author ?? "Vladyslav", source ?? "web"));
+    await svc.LinkAsync(req.From, req.To, req.Type, req.Message, author ?? "Human", source ?? "web"));
 
 api.MapPost("/revert", async (string id, RevertRequest req, string? author, string? source, DocService svc) =>
-    await svc.RevertAsync(id, req.To, req.Message, author ?? "Vladyslav", source ?? "web"));
+    await svc.RevertAsync(id, req.To, req.Message, author ?? "Human", source ?? "web"));
 
 api.MapGet("/changelog", async (int? sinceDays, string? ticket, bool? includeImports, DocService svc) =>
     await svc.ChangelogAsync(new ChangelogFilter(sinceDays, ticket, includeImports)));
