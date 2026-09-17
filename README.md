@@ -119,6 +119,22 @@ out to markdown files (with YAML frontmatter) alongside your existing repo, for 
 After editing `mcp/src/*`, run `.\scripts\build-mcp.ps1` and start a new Claude Code session in whatever
 project consumes it — MCP servers only load their code once, at session start.
 
+## Upgrading
+
+Updates are manual — there's no auto-update check. To move to a newer version:
+
+```bash
+npm install -g waydocs-mcp@latest
+```
+
+npm replaces the old global install directory outright, so the `postinstall` step downloads a fresh binary
+matching the new version's GitHub Release — no leftover binary from the old version lingers. Any per-project
+`.waydocs/docs.db` is migrated automatically the next time that binary runs against it (EF Core applies
+whatever new migrations exist on startup); if a release drops a header field, data that only lived in that
+field is discarded by the migration, same as any other schema change. No `~/.claude.json` changes are needed —
+just restart your Claude Code session afterward so it picks up the new binary (MCP servers only load once, at
+session start).
+
 ## Releasing (maintainers)
 
 1. Bump the version in `mcp/package.json` — it must match the git tag, since the postinstall downloader fetches
