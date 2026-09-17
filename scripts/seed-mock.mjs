@@ -10,6 +10,14 @@ const out = join(repo, 'web', 'src', 'mock', 'seed.json')
 
 if (process.argv.includes('--if-missing') && existsSync(out)) process.exit(0)
 if (!process.env.WAYDOCS_SOURCE) {
+  // No real docs to seed from (fresh checkout, CI) — write an empty mock so the production build (which
+  // bundles this file regardless of whether VITE_USE_MOCK is ever set at runtime) doesn't require one.
+  if (process.argv.includes('--if-missing')) {
+    mkdirSync(dirname(out), { recursive: true })
+    writeFileSync(out, JSON.stringify({ source: null, generatedUtc: new Date().toISOString(), docs: [] }, null, 1))
+    console.log(`seed-mock: WAYDOCS_SOURCE not set, wrote an empty mock seed -> ${relative(repo, out)}`)
+    process.exit(0)
+  }
   console.error('seed-mock: set WAYDOCS_SOURCE=<path to the docs folder to seed from>')
   process.exit(1)
 }
