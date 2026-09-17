@@ -1,8 +1,4 @@
-# data
-.waydocs/*.db
-.waydocs/*.db-shm
-.waydocs/*.db-wal
-.waydocs/backups/
+# .waydocs/ ignores itself (see Program.cs — it writes .waydocs/.gitignore on first run)
 
 # mock seed — real SD business docs, never commit
 web/src/mock/seed.json

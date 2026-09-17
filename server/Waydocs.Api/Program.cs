@@ -11,9 +11,19 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions { Args = ar
 // defaulting to the current directory. Its SQLite file lives at <path>/.waydocs/docs.db unless Docs:DbPath
 // overrides it explicitly.
 var projectPath = Path.GetFullPath(builder.Configuration["path"] ?? Environment.CurrentDirectory);
+var usingDefaultDbPath = builder.Configuration["Docs:DbPath"] is null;
 var dbPath = builder.Configuration["Docs:DbPath"]
     ?? Path.Combine(projectPath, ".waydocs", "docs.db");
-Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
+var dbDir = Path.GetDirectoryName(dbPath)!;
+Directory.CreateDirectory(dbDir);
+
+// Consumers shouldn't have to remember to add .waydocs/ to their own .gitignore — only for the default
+// location, since Docs:DbPath could point anywhere and we don't own that directory's contents.
+if (usingDefaultDbPath)
+{
+    var gitignorePath = Path.Combine(dbDir, ".gitignore");
+    if (!File.Exists(gitignorePath)) File.WriteAllText(gitignorePath, "*\n");
+}
 
 builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlite($"Data Source={dbPath}"));
 builder.Services.AddScoped<ExportService>();

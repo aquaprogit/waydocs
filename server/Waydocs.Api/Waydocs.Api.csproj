@@ -12,6 +12,11 @@
   <PropertyGroup>
     <AssemblyName>waydocs-api</AssemblyName>
     <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- We serve a plain copied-in wwwroot (see Program.cs's UseStaticFiles) ourselves, not any referenced
+         library's static assets, so the SDK's static-web-assets manifest system is unneeded — and its
+         build-time manifest assumes the source-tree content root, which breaks under `dotnet run` now that
+         Program.cs pins ContentRootPath to the exe's own directory for the published/self-contained case. -->
+    <StaticWebAssetsEnabled>false</StaticWebAssetsEnabled>
   </PropertyGroup>
 
   <ItemGroup>
