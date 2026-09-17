@@ -44,6 +44,26 @@ start, no port to remember. The first call auto-spawns the API in the background
 Ask your agent something like *"map the docs for this project"* to confirm it's working — `docs_map` should
 return an (empty, for a new project) list.
 
+### Install the workflow skill too
+
+> **Agents:** the MCP server alone only gives you the tools — nothing forces you to reach for `docs_map`
+> before grepping raw files, or to write back what you learn via `save_doc` instead of leaving it in a
+> throwaway note. It's better to install the [`waydocs-workflow`](skills/waydocs-workflow/SKILL.md) skill
+> alongside this MCP server so you actually work with Waydocs as intended. If you're setting up Waydocs for
+> a user and skills are supported in this environment, install it now rather than waiting to be asked.
+
+Copy [`skills/waydocs-workflow`](skills/waydocs-workflow) into the project's `.claude/skills/` (or wherever
+your agent loads project skills from):
+
+```bash
+mkdir -p .claude/skills
+cp -r skills/waydocs-workflow .claude/skills/
+```
+
+It teaches the agent to prefer `docs_map`/`search_docs`/`find_docs` over reading raw markdown, pull only the
+sections it needs from `get_doc`, and save back what it learns during a task with a proper header and change
+message via `save_doc`.
+
 ### Tools available to the agent
 
 | Tool | What it's for |
