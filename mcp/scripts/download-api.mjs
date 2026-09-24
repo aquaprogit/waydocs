@@ -3,7 +3,7 @@
 // GitHub Release (built by .github/workflows/publish-api.yml) into mcp/bin/<rid>/, so `npm install -g
 // waydocs-mcp` needs no .NET install. Never fails the install — a missing/failed binary just means
 // mcp/src/index.ts's clear runtime error fires later instead of npm install aborting.
-import { createWriteStream, existsSync, mkdirSync, chmodSync, rmSync } from 'node:fs'
+import { createWriteStream, existsSync, mkdirSync, chmodSync, rmSync, readFileSync, writeFileSync } from 'node:fs'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { execFileSync } from 'node:child_process'
@@ -52,10 +52,17 @@ async function main() {
   const exeName = rid.startsWith('win') ? 'waydocs-api.exe' : 'waydocs-api'
   const destDir = path.resolve(__dirname, '..', 'bin', rid)
   const exePath = path.join(destDir, exeName)
-  if (existsSync(exePath)) {
-    console.log(`[waydocs] API binary already present at ${exePath}`)
+  const versionMarker = path.join(destDir, '.version')
+
+  // `npm install -g` over an existing global package doesn't reliably wipe files it didn't ship in the new
+  // tarball (bin/ is written by this script, not by npm), so a plain existsSync(exePath) check would happily
+  // keep serving a binary from whatever version was installed last time. A version marker written alongside
+  // the binary — checked against this run's own package.json — catches that instead of trusting presence alone.
+  if (existsSync(exePath) && existsSync(versionMarker) && readFileSync(versionMarker, 'utf8').trim() === pkg.version) {
+    console.log(`[waydocs] API binary already present at ${exePath} (v${pkg.version})`)
     return
   }
+  if (existsSync(destDir)) rmSync(destDir, { recursive: true, force: true })
 
   const tag = `v${pkg.version}`
   const asset = `waydocs-api-${rid}.tar.gz`
@@ -91,8 +98,9 @@ async function main() {
   }
 
   if (!rid.startsWith('win')) chmodSync(exePath, 0o755)
+  writeFileSync(versionMarker, pkg.version)
 
-  console.log(`[waydocs] installed API binary at ${exePath}`)
+  console.log(`[waydocs] installed API binary at ${exePath} (v${pkg.version})`)
 }
 
 await main()
