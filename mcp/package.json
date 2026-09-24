@@ -1,6 +1,6 @@
 {
   "name": "waydocs-mcp",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Local MCP server for Waydocs — versioned, agent-navigable project docs.",
   "type": "module",
   "bin": {
