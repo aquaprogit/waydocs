@@ -2,12 +2,41 @@
 import { spawn, type ChildProcess } from 'node:child_process'
 import { createServer } from 'node:net'
 import { existsSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const pkg = createRequire(import.meta.url)('../package.json') as { version: string }
+
+function isOutdated(current: string, latest: string): boolean {
+  const c = current.split('.').map(Number)
+  const l = latest.split('.').map(Number)
+  for (let i = 0; i < 3; i++) {
+    if ((l[i] ?? 0) !== (c[i] ?? 0)) return (l[i] ?? 0) > (c[i] ?? 0)
+  }
+  return false
+}
+
+// Best-effort, single call per process start (one per Claude Code session) — a slow or unreachable GitHub
+// never blocks startup or fails it; a stale/malformed response is just treated as "no update available".
+async function checkForUpdate(current: string): Promise<{ current: string; latest: string } | null> {
+  try {
+    const res = await fetch('https://api.github.com/repos/aquaprogit/waydocs/releases/latest', {
+      signal: AbortSignal.timeout(3000),
+      headers: { Accept: 'application/vnd.github+json' },
+    })
+    if (!res.ok) return null
+    const data = (await res.json()) as { tag_name?: string }
+    const latest = data.tag_name?.replace(/^v/, '')
+    if (!latest || !isOutdated(current, latest)) return null
+    return { current, latest }
+  } catch {
+    return null
+  }
+}
 
 function parseArgs(argv: string[]) {
   // `waydocs-mcp --path <dir>` (no subcommand, existing MCP registrations) defaults to 'mcp'; a bare leading
@@ -148,17 +177,28 @@ async function startOwnApi(projectPath: string): Promise<string> {
 }
 
 async function runMcp(projectPath: string) {
+  // Runs alongside API startup rather than after it, so a slow GitHub call never adds to the time before
+  // the agent's first tool call goes through.
+  const updateCheck = checkForUpdate(pkg.version)
   if (!process.env.WAYDOCS_API_URL) {
     process.env.WAYDOCS_API_URL = await startOwnApi(projectPath)
   }
+  const update = await updateCheck
 
   // Imported after WAYDOCS_API_URL is set — client.ts reads it once at module load.
   const { registerTools } = await import('./tools.js')
 
-  const server = new McpServer({
-    name: 'waydocs',
-    version: '0.1.0',
-  })
+  const server = new McpServer(
+    { name: 'waydocs', version: pkg.version },
+    update
+      ? {
+          instructions:
+            `waydocs-mcp is out of date: this project is running ${update.current}, but ${update.latest} is available. ` +
+            'Tell the user to update it (see "Upgrading" in the waydocs README) — this session keeps using the old ' +
+            'tools/behavior until they do and restart their session.',
+        }
+      : undefined,
+  )
 
   registerTools(server)
 
@@ -169,8 +209,11 @@ async function runMcp(projectPath: string) {
 // `waydocs-mcp web --path <dir>`: starts the API (same resolution as MCP mode) with its bundled web UI, opens
 // it in the default browser, and stays alive until Ctrl+C — for a human browsing docs, not an agent.
 async function runWeb(projectPath: string) {
+  const updateCheck = checkForUpdate(pkg.version)
   const url = process.env.WAYDOCS_API_URL ?? (await startOwnApi(projectPath))
+  const update = await updateCheck
   console.log(`Waydocs is running at ${url}`)
+  if (update) console.log(`⚠ waydocs-mcp ${update.current} is out of date — ${update.latest} is available. Run: npm install -g waydocs-mcp@latest`)
   console.log('Press Ctrl+C to stop.')
   openBrowser(url)
   await new Promise(() => {}) // SIGINT/SIGTERM handlers registered in startOwnApi exit the process

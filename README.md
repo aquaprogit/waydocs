@@ -187,7 +187,10 @@ project consumes it. MCP servers only load their code once, at session start.
 
 ## Upgrading
 
-Updates are manual; there's no auto-update check. To move to a newer version:
+Updating is still a manual step, but you won't miss that one exists: every time `waydocs-mcp` starts, it checks
+the latest GitHub release against its own version (best-effort, a few seconds' timeout, never blocks or fails
+startup if GitHub is unreachable). If it's behind, MCP mode surfaces that in the server's instructions, so the
+agent knows and can tell you; `web` mode prints it straight to the terminal. To move to a newer version:
 
 ```bash
 npm install -g waydocs-mcp@latest

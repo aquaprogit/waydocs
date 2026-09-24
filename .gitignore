@@ -15,6 +15,7 @@ node_modules/
 web/dist/
 mcp/dist/
 mcp/bin/
+mcp/*.tgz
 *.log
 scripts/logs/
 
