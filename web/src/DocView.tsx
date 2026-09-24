@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { api } from './api'
 import AgentView from './AgentView'
+import DeleteDocDialog from './DeleteDocDialog'
 import DocGraphPanel from './DocGraphPanel'
 import HeaderCard from './HeaderCard'
 import Markdown from './Markdown'
@@ -22,6 +23,7 @@ export default function DocView({ id, ids, rev, tab, saved, version }: Props) {
   const doc = useAsync(() => api.getDoc(id, rev), [id, rev, version])
   const links = useAsync(() => api.links(id), [id, version])
   const [dismissed, setDismissed] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   if (doc.error) {
     const fallback = [...ids][0]
@@ -66,8 +68,13 @@ export default function DocView({ id, ids, rev, tab, saved, version }: Props) {
               Edit
             </a>
           )}
+          <button className="btn danger" onClick={() => setDeleting(true)}>
+            Delete
+          </button>
         </div>
       </div>
+
+      {deleting && <DeleteDocDialog id={id} onClose={() => setDeleting(false)} />}
 
       {saved && !dismissed && !old && (
         <div className="banner ok">

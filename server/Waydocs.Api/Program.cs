@@ -96,6 +96,12 @@ api.MapPut("/doc", async (SaveRequest req, string? author, string? source, DocSe
 api.MapPost("/revert", async (string id, RevertRequest req, string? author, string? source, DocService svc) =>
     await svc.RevertAsync(id, req.To, req.Message, author ?? "Human", source ?? "web"));
 
+api.MapDelete("/doc", async (string id, DocService svc) =>
+{
+    await svc.DeleteAsync(id);
+    return Results.Ok(new DeleteResult(true));
+});
+
 api.MapGet("/changelog", async (int? sinceDays, string? ticket, bool? includeImports, DocService svc) =>
     await svc.ChangelogAsync(new ChangelogFilter(sinceDays, ticket, includeImports)));
 

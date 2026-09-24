@@ -47,6 +47,25 @@ public class ExportService(AppDbContext db, IConfiguration config, ILogger<Expor
         await db.SaveChangesAsync();
     }
 
+    /// <summary>Removes the exported markdown file (if any) along with its export-tracking row. Best-effort:
+    /// a missing export path or file is not an error, since not every deployment exports to disk at all.</summary>
+    public async Task DeleteAsync(string id)
+    {
+        var exportRoot = config["Docs:ExportPath"];
+        if (!string.IsNullOrEmpty(exportRoot))
+        {
+            var fullPath = Path.Combine(exportRoot, MarkdownUtil.IdToPath(id).Replace('/', Path.DirectorySeparatorChar));
+            if (File.Exists(fullPath)) File.Delete(fullPath);
+        }
+
+        var existing = await db.ExportStates.FindAsync(id);
+        if (existing != null)
+        {
+            db.ExportStates.Remove(existing);
+            await db.SaveChangesAsync();
+        }
+    }
+
     private static string BuildFrontmatter(string id, Revision r)
     {
         var refs = JsonSerializer.Deserialize<List<DocRefDto>>(r.RefsJson, JsonOpts) ?? [];

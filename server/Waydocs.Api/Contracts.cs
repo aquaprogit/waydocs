@@ -55,6 +55,8 @@ public record CheckIssueDto(string DocId, string Severity, string Kind, string D
 
 public record RevertRequest(int To, string Message);
 
+public record DeleteResult(bool Deleted);
+
 public record ImportItem(
     string Id, string Title, string Summary, List<DocRefDto> Refs, string Content, string SourcePath);
 public record ImportResult(int Imported, int Skipped);

@@ -105,6 +105,11 @@ export const httpApi = {
     return r
   },
 
+  async deleteDoc(id: string): Promise<void> {
+    await req<{ deleted: boolean }>(`/doc${qs({ id })}`, { method: 'DELETE' })
+    bump()
+  },
+
   changelog: (f: ChangelogFilter = {}) =>
     req<ChangelogItem[]>(`/changelog${qs({ sinceDays: f.sinceDays ?? undefined, ticket: f.ticket, includeImports: f.includeImports })}`),
 
