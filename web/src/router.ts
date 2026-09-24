@@ -1,6 +1,6 @@
 import { useMemo, useSyncExternalStore } from 'react'
 
-export type Page = 'home' | 'doc' | 'edit' | 'history' | 'graph' | 'changelog' | 'check' | 'map'
+export type Page = 'home' | 'doc' | 'edit' | 'history' | 'graph' | 'changelog' | 'check' | 'map' | 'metrics'
 
 export interface Route {
   page: Page
@@ -9,7 +9,7 @@ export interface Route {
 }
 
 const DOC_PAGES = new Set<Page>(['doc', 'edit', 'history'])
-const PLAIN_PAGES = new Set<Page>(['graph', 'changelog', 'check', 'map'])
+const PLAIN_PAGES = new Set<Page>(['graph', 'changelog', 'check', 'map', 'metrics'])
 
 export function parseHash(hash: string): Route {
   const raw = decodeURIComponent(hash.replace(/^#\/?/, ''))

@@ -36,6 +36,7 @@ if (usingDefaultDbPath)
 builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlite($"Data Source={dbPath}"));
 builder.Services.AddScoped<ExportService>();
 builder.Services.AddScoped<DocService>();
+builder.Services.AddScoped<MetricsService>();
 builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
     .WithOrigins("http://localhost:5183", "http://127.0.0.1:5183", "http://localhost:4183", "http://127.0.0.1:4183")
     .AllowAnyHeader().AllowAnyMethod()));
@@ -112,6 +113,14 @@ api.MapGet("/check", async (DocService svc) => await svc.CheckAsync());
 api.MapGet("/source", async (DocService svc) => new { source = await svc.SourceAsync() });
 
 api.MapPost("/import", async (List<ImportItem> items, DocService svc) => await svc.ImportAsync(items));
+
+api.MapPost("/metrics/tool-usage", async (ToolUsageRequest req, MetricsService svc) =>
+{
+    await svc.RecordAsync(req.Tool, req.DocIds, req.ActualTokens);
+    return Results.Ok();
+});
+
+api.MapGet("/metrics/summary", async (int? sinceDays, MetricsService svc) => await svc.SummaryAsync(sinceDays));
 
 // Minimal-hosting routing is matched before this file's other middleware runs, so an unconditional MapGet("/")
 // would win over UseStaticFiles's index.html even when a web build is bundled — only register the API-only

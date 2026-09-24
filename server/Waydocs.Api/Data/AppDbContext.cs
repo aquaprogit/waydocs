@@ -8,6 +8,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Revision> Revisions => Set<Revision>();
     public DbSet<DocRef> DocRefs => Set<DocRef>();
     public DbSet<ExportState> ExportStates => Set<ExportState>();
+    public DbSet<ToolUsage> ToolUsages => Set<ToolUsage>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -34,5 +35,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         });
 
         b.Entity<ExportState>(e => e.HasKey(x => x.DocId));
+
+        b.Entity<ToolUsage>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.Tool);
+            e.HasIndex(x => x.CreatedUtc);
+        });
     }
 }

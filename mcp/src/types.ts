@@ -94,6 +94,34 @@ export interface SaveResult {
   removed: number
 }
 
+export interface ToolUsageByTool {
+  tool: string
+  calls: number
+  baselineTokens: number
+  actualTokens: number
+  savedTokens: number
+}
+
+export interface ToolUsageDaily {
+  date: string
+  calls: number
+  baselineTokens: number
+  actualTokens: number
+  savedTokens: number
+}
+
+export interface ToolUsageSummary {
+  calls: number
+  baselineTokens: number
+  actualTokens: number
+  savedTokens: number
+  byTool: ToolUsageByTool[]
+  daily: ToolUsageDaily[]
+  since: string | null
+  firstCallUtc: string | null
+  lastCallUtc: string | null
+}
+
 export interface DocHeaderInput {
   title: string
   summary: string

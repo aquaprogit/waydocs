@@ -1838,6 +1838,118 @@ pre.code {
   gap: 8px;
   flex: none;
 }
+.metrics-windows {
+  margin: 16px 0;
+}
+.metrics-section h3 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  margin: 20px 0 8px;
+}
+.chart-legend {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 10px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+.chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.chart-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+.chart-swatch.track {
+  background: var(--rule-strong);
+}
+.chart-swatch.fill {
+  background: var(--accent);
+}
+.bytool-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.bytool-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 100px;
+  align-items: center;
+  gap: 12px;
+}
+.bytool-label {
+  font-size: 12px;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bytool-track {
+  position: relative;
+  height: 16px;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.bytool-baseline,
+.bytool-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  height: 100%;
+}
+.bytool-baseline {
+  background: var(--rule-strong);
+}
+.bytool-fill {
+  background: var(--accent);
+}
+.bytool-saved {
+  text-align: right;
+  font-size: 12px;
+}
+.bytool-saved.ok {
+  color: var(--ok);
+}
+.bytool-saved.err {
+  color: var(--err);
+}
+.saved-chart {
+  width: 100%;
+  max-width: 640px;
+  height: 160px;
+  display: block;
+}
+.saved-axis {
+  stroke: var(--rule);
+  stroke-width: 1;
+}
+.saved-area {
+  fill: var(--ok-soft);
+  opacity: 0.6;
+}
+.saved-line {
+  fill: none;
+  stroke: var(--ok);
+  stroke-width: 2;
+}
+.saved-dot {
+  fill: var(--ok);
+  stroke: var(--card);
+  stroke-width: 1.5;
+}
+.saved-tick {
+  fill: var(--ink-soft);
+  font-size: 10px;
+  font-family: inherit;
+}
 .tiles {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));

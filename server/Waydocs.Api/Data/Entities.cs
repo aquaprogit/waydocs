@@ -67,3 +67,17 @@ public class ExportState
     public string Path { get; set; } = "";
     public string ExportedHash { get; set; } = "";
 }
+
+/// <summary>One MCP tool call. BaselineTokens is what an agent would have spent reading the full current
+/// body of every doc in DocIdsJson instead of calling this tool; ActualTokens is what the tool actually
+/// returned. Both are the same chars/4 estimate used everywhere else (see MarkdownUtil.EstimateTokens) — this
+/// is a relative savings metric, not a count from a real tokenizer.</summary>
+public class ToolUsage
+{
+    public int Id { get; set; }
+    public string Tool { get; set; } = "";
+    public string DocIdsJson { get; set; } = "[]";
+    public int BaselineTokens { get; set; }
+    public int ActualTokens { get; set; }
+    public string CreatedUtc { get; set; } = "";
+}

@@ -7,6 +7,7 @@ import DocView from './DocView'
 import EditPage from './EditPage'
 import GraphPage from './GraphPage'
 import HistoryPage from './HistoryPage'
+import MetricsPage from './MetricsPage'
 import MockMenu from './MockMenu'
 import NewDocDialog from './NewDocDialog'
 import SearchBox from './SearchBox'
@@ -22,6 +23,7 @@ const NAV: [Page, string][] = [
   ['changelog', 'Changelog'],
   ['check', 'Check'],
   ['map', 'Agent map'],
+  ['metrics', 'Metrics'],
 ]
 
 const num = (v: string | null) => (v ? Number(v) : undefined)
@@ -62,6 +64,7 @@ export default function App() {
   else if (route.page === 'changelog') page = <ChangelogPage version={version} />
   else if (route.page === 'check') page = <CheckPage version={version} />
   else if (route.page === 'map') page = <AgentMapPage headers={headers} />
+  else if (route.page === 'metrics') page = <MetricsPage />
 
   return (
     <div className="app">

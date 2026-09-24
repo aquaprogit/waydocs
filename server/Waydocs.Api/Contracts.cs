@@ -57,6 +57,17 @@ public record RevertRequest(int To, string Message);
 
 public record DeleteResult(bool Deleted);
 
+public record ToolUsageRequest(string Tool, List<string> DocIds, int ActualTokens);
+
+public record ToolUsageByToolDto(string Tool, int Calls, int BaselineTokens, int ActualTokens, int SavedTokens);
+
+public record ToolUsageDailyDto(string Date, int Calls, int BaselineTokens, int ActualTokens, int SavedTokens);
+
+public record ToolUsageSummaryDto(
+    int Calls, int BaselineTokens, int ActualTokens, int SavedTokens,
+    List<ToolUsageByToolDto> ByTool, List<ToolUsageDailyDto> Daily,
+    string? Since, string? FirstCallUtc, string? LastCallUtc);
+
 public record ImportItem(
     string Id, string Title, string Summary, List<DocRefDto> Refs, string Content, string SourcePath);
 public record ImportResult(int Imported, int Skipped);

@@ -15,6 +15,7 @@ import {
   type SaveResult,
   type SearchHit,
   type Source,
+  type ToolUsageSummary,
 } from './types'
 
 let version = 0
@@ -116,6 +117,8 @@ export const httpApi = {
   gaps: () => req<GapItem[]>('/gaps'),
 
   check: () => req<CheckIssue[]>('/check'),
+
+  metricsSummary: (sinceDays?: number) => req<ToolUsageSummary>(`/metrics/summary${qs({ sinceDays })}`),
 
   /** No server-side concept — kept so components written against the mock's DocsApi shape still compile. */
   async simulateAgentEdit(id: string): Promise<SaveResult> {

@@ -9,6 +9,7 @@ import type {
   GraphData,
   HistoryItem,
   SaveResult,
+  ToolUsageSummary,
 } from './types.js'
 
 const BASE = (process.env.WAYDOCS_API_URL || 'http://localhost:5180').replace(/\/+$/, '')
@@ -91,4 +92,18 @@ export const api = {
     req<SaveResult>(`/doc${qs({ author: 'Claude', source: 'mcp' })}`, { method: 'PUT', body: JSON.stringify(request) }),
   revert: (id: string, to: number, message: string) =>
     req<SaveResult>(`/revert${qs({ id, author: 'Claude', source: 'mcp' })}`, { method: 'POST', body: JSON.stringify({ to, message }) }),
+
+  // Best-effort: a metrics call never blocks or fails the tool call it's measuring.
+  async recordToolUsage(tool: string, docIds: string[], actualTokens: number): Promise<void> {
+    try {
+      await req(`/metrics/tool-usage`, { method: 'POST', body: JSON.stringify({ tool, docIds, actualTokens }) })
+    } catch {
+      /* metrics are informational only */
+    }
+  },
+  metricsSummary: (sinceDays?: number) => req<ToolUsageSummary>(`/metrics/summary${qs({ sinceDays })}`),
 }
+
+/** Same chars/4 estimate the API uses (MarkdownUtil.EstimateTokens) — what a tool call actually returned to
+ * the agent, measured on the exact JSON text sent back over MCP. */
+export const estimateTokens = (s: string) => Math.ceil(s.length / 4)
