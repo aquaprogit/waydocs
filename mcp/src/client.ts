@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import type {
   ChangelogItem,
   CheckIssue,
@@ -11,6 +12,10 @@ import type {
   SaveResult,
   ToolUsageSummary,
 } from './types.js'
+
+// One per MCP server process — i.e. one agent session. The API credits each doc's body to the metrics baseline
+// at most once per session (see MetricsService.RecordAsync).
+const SESSION_ID = randomUUID()
 
 const BASE = (process.env.WAYDOCS_API_URL || 'http://localhost:5180').replace(/\/+$/, '')
 
@@ -96,7 +101,7 @@ export const api = {
   // Best-effort: a metrics call never blocks or fails the tool call it's measuring.
   async recordToolUsage(tool: string, docIds: string[], actualTokens: number): Promise<void> {
     try {
-      await req(`/metrics/tool-usage`, { method: 'POST', body: JSON.stringify({ tool, docIds, actualTokens }) })
+      await req(`/metrics/tool-usage`, { method: 'POST', body: JSON.stringify({ tool, sessionId: SESSION_ID, docIds, actualTokens }) })
     } catch {
       /* metrics are informational only */
     }
@@ -105,5 +110,5 @@ export const api = {
 }
 
 /** Same chars/4 estimate the API uses (MarkdownUtil.EstimateTokens) — what a tool call actually returned to
- * the agent, measured on the exact JSON text sent back over MCP. */
+ * the agent, measured on the exact text sent back over MCP. */
 export const estimateTokens = (s: string) => Math.ceil(s.length / 4)

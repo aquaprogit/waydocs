@@ -188,6 +188,10 @@ namespace Waydocs.Api.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("SessionId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Tool")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -195,6 +199,8 @@ namespace Waydocs.Api.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedUtc");
+
+                    b.HasIndex("SessionId");
 
                     b.HasIndex("Tool");
 

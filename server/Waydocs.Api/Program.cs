@@ -116,7 +116,7 @@ api.MapPost("/import", async (List<ImportItem> items, DocService svc) => await s
 
 api.MapPost("/metrics/tool-usage", async (ToolUsageRequest req, MetricsService svc) =>
 {
-    await svc.RecordAsync(req.Tool, req.DocIds, req.ActualTokens);
+    await svc.RecordAsync(req.Tool, req.SessionId ?? "", req.DocIds, req.ActualTokens);
     return Results.Ok();
 });
 

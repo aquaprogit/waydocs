@@ -57,7 +57,7 @@ public record RevertRequest(int To, string Message);
 
 public record DeleteResult(bool Deleted);
 
-public record ToolUsageRequest(string Tool, List<string> DocIds, int ActualTokens);
+public record ToolUsageRequest(string Tool, string? SessionId, List<string> DocIds, int ActualTokens);
 
 public record ToolUsageByToolDto(string Tool, int Calls, int BaselineTokens, int ActualTokens, int SavedTokens);
 

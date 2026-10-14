@@ -6,7 +6,8 @@ namespace Waydocs.Api;
 
 /// <summary>
 /// Records how many tokens each MCP tool call actually returned versus how many the agent would have spent
-/// reading the full current body of every doc that call touched instead — the "what Waydocs saves you" number.
+/// reading, once per session, the full body of every doc it actually opened — the "what Waydocs saves you"
+/// number. Discovery calls (map, search, header, history…) count as pure cost; writes aren't metered at all.
 /// Stored per project in the same SQLite file as the docs it measures (see AppDbContext), so it moves with the
 /// project the same way .waydocs/docs.db already does.
 /// </summary>
@@ -16,21 +17,32 @@ public class MetricsService(AppDbContext db)
 
     /// <summary>BaselineTokens is computed here from each doc's live current revision, not from a number the
     /// caller supplies, so it stays correct even if the doc changed since the agent last fetched its header.
-    /// Docs that no longer exist (e.g. deleted since the call) simply contribute 0.</summary>
-    public async Task RecordAsync(string tool, List<string> docIds, int actualTokens)
+    /// A doc already credited earlier in the same session contributes 0 — a raw-file agent would still have it
+    /// in context — and docs that no longer exist (e.g. deleted since the call) contribute 0 too.</summary>
+    public async Task RecordAsync(string tool, string sessionId, List<string> docIds, int actualTokens)
     {
-        var distinct = docIds.Distinct().ToList();
+        var alreadyRead = new HashSet<string>();
+        if (sessionId != "")
+        {
+            var prior = await db.ToolUsages.AsNoTracking().Where(u => u.SessionId == sessionId).Select(u => u.DocIdsJson).ToListAsync();
+            foreach (var json in prior) alreadyRead.UnionWith(JsonSerializer.Deserialize<List<string>>(json, JsonOpts) ?? []);
+        }
+
+        var credited = new List<string>();
         var baseline = 0;
-        foreach (var id in distinct)
+        foreach (var id in docIds.Distinct().Where(alreadyRead.Add))
         {
             var rev = await db.Revisions.Where(r => r.DocId == id).OrderByDescending(r => r.Number).FirstOrDefaultAsync();
-            if (rev != null) baseline += rev.Tokens;
+            if (rev == null) continue;
+            credited.Add(id);
+            baseline += rev.Tokens;
         }
 
         db.ToolUsages.Add(new ToolUsage
         {
             Tool = tool,
-            DocIdsJson = JsonSerializer.Serialize(distinct, JsonOpts),
+            SessionId = sessionId,
+            DocIdsJson = JsonSerializer.Serialize(credited, JsonOpts),
             BaselineTokens = baseline,
             ActualTokens = actualTokens,
             CreatedUtc = DateTime.UtcNow.ToString("o"),

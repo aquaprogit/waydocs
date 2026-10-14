@@ -14,7 +14,7 @@ const pct = (saved: number, baseline: number) => (baseline === 0 ? 0 : Math.roun
 const fmt = (n: number) => n.toLocaleString()
 const signed = (n: number) => `${n >= 0 ? '' : '−'}${fmt(Math.abs(n))}`
 
-/** One row per tool: a muted bar sized to how many tokens a full-body read would have cost, with the
+/** One row per tool: a muted bar sized to how many tokens reading its opened docs' files would have cost, with the
  * accent bar (what the call actually returned) drawn over the same 0-baseline — the muted band left
  * showing past the accent bar's edge is the saved tokens, at a glance. Both bars share one scale (the
  * largest baseline in the set) so magnitudes are comparable across rows, not just within one. */
@@ -37,7 +37,7 @@ function ByToolChart({ byTool }: { byTool: ToolUsageByTool[] }) {
             <div
               className="bytool-baseline"
               style={{ width: `${(t.baselineTokens / max) * 100}%` }}
-              title={`${fmt(t.baselineTokens)} tokens would've been read in full`}
+              title={`${fmt(t.baselineTokens)} tokens of opened docs, read as raw files`}
             />
             <div
               className="bytool-fill"
@@ -109,7 +109,9 @@ export default function MetricsPage() {
     <div className="page">
       <h1 className="doc-title">Metrics</h1>
       <p className="muted">
-        What every MCP tool call actually returned versus what reading the full current body of each doc it touched would have cost.
+        Everything Waydocs returned to the agent, discovery calls included, versus what reading the full body of each doc it actually
+        opened with get_doc would have cost, each doc counted once per agent session. Writes aren't counted. Calls from before
+        sessions were tracked count one UTC day as one session.
         Both sides use the same rough estimate as the rest of the app (chars/4), so this is a relative savings number, not an exact
         count from a real tokenizer. Nothing here reflects edits made in this web UI, only calls made through the MCP server.
       </p>
@@ -138,7 +140,7 @@ export default function MetricsPage() {
             </div>
             <div className="tile">
               <span className="tile-n">{fmt(s.baselineTokens)}</span>
-              <span>tokens a full-file read would have cost</span>
+              <span>tokens reading the opened files would have cost</span>
             </div>
             <div className="tile">
               <span className="tile-n">{fmt(s.actualTokens)}</span>

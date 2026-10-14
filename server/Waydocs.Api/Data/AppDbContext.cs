@@ -40,6 +40,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             e.HasKey(x => x.Id);
             e.HasIndex(x => x.Tool);
+            e.HasIndex(x => x.SessionId);
             e.HasIndex(x => x.CreatedUtc);
         });
     }

@@ -46,8 +46,13 @@ expensive. Respect that gradient:
    folder it belongs to and the docs it links to or is linked from — before deciding you need more docs.
 4. Only call **`get_doc`** when a summary genuinely isn't enough. Pass `sections` (matched by heading) to
    pull just the parts you need rather than the whole body — most questions are answered by one or two
-   sections, not the entire doc. Use `get_header` instead of `get_doc` when you only need the answers/refs
-   list, not any body text at all.
+   sections, not the entire doc. `search_docs` hits on large docs already list their section headings, so
+   you can go straight to `get_doc` with `sections`. Use `get_header` instead of `get_doc` when you only
+   need the answers/refs list, not any body text at all.
+
+Every discovery call costs tokens too. Don't chain `docs_map` → `search_docs` → `get_header` → `get_doc` by
+reflex: one `search_docs` or `find_docs` is usually enough to pick the doc, and a doc you've already read
+this session is still in your context — don't fetch it again.
 
 Treat this the same way you'd treat reading a large file: you wouldn't `Read` a 2000-line file to answer a
 question a `Grep` could answer in one line. `docs_map`/`search_docs`/`find_docs` are your `Grep`; `get_doc`
@@ -86,11 +91,12 @@ markdown file. A one-off `NOTES.md` is exactly the kind of undiscoverable doc Wa
   docs" or "fix" tells a future reader nothing; "document the retry backoff added for ticket #4936" does.
   Pass `ticket` too when the change traces to one, so `changelog` can be filtered by it later.
 - **`baseRevision`**: `null` for a brand-new doc. For an existing one, use the revision number you just read
-  via `get_header`/`get_doc` — if it's stale, the save is rejected as a conflict instead of silently
+  via `get_header`, or the `rev` on `get_doc`'s second line — if it's stale, the save is rejected as a conflict instead of silently
   clobbering someone else's edit. Treat that rejection as a signal to re-read the current doc and reapply
   your change on top, not as an error to route around.
 
-If you're updating an existing doc, read its current header first (`get_header`) so you extend the existing
+If you're updating an existing doc, read its current header first (`get_header`, or `get_doc` with
+`withHeader: true` when you need the body as well) so you extend the existing
 `answers`/`refs` rather than overwriting a well-maintained header with a thin one just because you didn't
 look.
 

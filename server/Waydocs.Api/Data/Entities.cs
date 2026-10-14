@@ -68,14 +68,19 @@ public class ExportState
     public string ExportedHash { get; set; } = "";
 }
 
-/// <summary>One MCP tool call. BaselineTokens is what an agent would have spent reading the full current
-/// body of every doc in DocIdsJson instead of calling this tool; ActualTokens is what the tool actually
-/// returned. Both are the same chars/4 estimate used everywhere else (see MarkdownUtil.EstimateTokens) — this
+/// <summary>One MCP tool call. ActualTokens is what the tool returned — every metered call costs, discovery
+/// included. BaselineTokens is the full current body of each doc in DocIdsJson: the docs whose body this call
+/// read (get_doc) for the first time in its session, i.e. what reading those files directly would have cost.
+/// Discovery calls credit nothing, since an agent reading raw files would never have read the docs a search
+/// merely listed. Both are the same chars/4 estimate used everywhere else (see MarkdownUtil.EstimateTokens) — this
 /// is a relative savings metric, not a count from a real tokenizer.</summary>
 public class ToolUsage
 {
     public int Id { get; set; }
     public string Tool { get; set; } = "";
+    /// <summary>One MCP server process — i.e. one agent session. A doc's body is credited to the baseline at most
+    /// once per session, the way a file an agent already read stays in its context.</summary>
+    public string SessionId { get; set; } = "";
     public string DocIdsJson { get; set; } = "[]";
     public int BaselineTokens { get; set; }
     public int ActualTokens { get; set; }
